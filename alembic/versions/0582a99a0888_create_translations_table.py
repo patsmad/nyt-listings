@@ -19,7 +19,7 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     query = """
-    CREATE TABLE film_locations(
+    CREATE TABLE items(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename VARCHAR(50) NOT NULL,
         x INTEGER NOT NULL,
@@ -34,6 +34,6 @@ def upgrade():
 def downgrade():
     conn = op.get_bind()
     query = """
-    DROP TABLE film_locations;
+    DROP TABLE items;
     """
     conn.execute(query)

@@ -21,16 +21,16 @@ def upgrade():
     query = """
         CREATE TABLE boxes(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            film_location_id INTEGER NOT NULL,
+            item_id INTEGER NOT NULL,
             left INTEGER NOT NULL,
             top INTEGER NOT NULL,
             width INTEGER NOT NULL,
             height INTEGER NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            CONSTRAINT fk_film_location
-                FOREIGN KEY (film_location_id)
-                REFERENCES film_locations(id)
+            CONSTRAINT fk_item
+                FOREIGN KEY (item_id)
+                REFERENCES items(id)
                 ON DELETE CASCADE
                 );
         """
