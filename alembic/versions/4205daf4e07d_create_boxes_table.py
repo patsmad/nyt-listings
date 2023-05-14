@@ -26,6 +26,8 @@ def upgrade():
             top INTEGER NOT NULL,
             width INTEGER NOT NULL,
             height INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT fk_film_location
                 FOREIGN KEY (film_location_id)
                 REFERENCES film_locations(id)

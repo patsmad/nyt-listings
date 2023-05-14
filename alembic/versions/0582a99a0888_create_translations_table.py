@@ -23,7 +23,9 @@ def upgrade():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         filename VARCHAR(50) NOT NULL,
         x INTEGER NOT NULL,
-        y INTEGER NOT NULL
+        y INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     """
     conn.execute(query)
