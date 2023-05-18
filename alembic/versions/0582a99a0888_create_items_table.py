@@ -1,4 +1,4 @@
-"""create translations table
+"""create items table
 
 Revision ID: 0582a99a0888
 Revises: 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '0582a99a0888'
-down_revision = None
+down_revision = '7fa351c6daeb'
 branch_labels = None
 depends_on = None
 
@@ -21,12 +21,16 @@ def upgrade():
     query = """
     CREATE TABLE items(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        filename VARCHAR(50) NOT NULL,
+        file_id INTEGER NOT NULL,
         x INTEGER NOT NULL,
         y INTEGER NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_file
+                FOREIGN KEY (file_id)
+                REFERENCES files(id)
+                ON DELETE CASCADE
+                );
     """
     conn.execute(sa.text(query))
 
@@ -36,4 +40,4 @@ def downgrade():
     query = """
     DROP TABLE items;
     """
-    conn.execute(query)
+    conn.execute(sa.text(query))

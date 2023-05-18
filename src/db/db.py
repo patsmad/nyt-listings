@@ -1,17 +1,48 @@
 from model.item import Item
 from model.box import Box
 from model.link import Link
+from model.file import File
 import sqlalchemy as sa
 
 class DB:
     engine: sa.Engine = sa.create_engine('sqlite:///../../data/NYTListings.db')
+
+    def fetch_all_files(self) -> list[File]:
+        with self.engine.connect() as con:
+            results = con.execute(
+                sa.text('SELECT '
+                        'file.id, '
+                        'file.name, '
+                        'file.created_at, '
+                        'file.updated_at FROM files file')
+            ).fetchall()
+        return [File(**file._asdict()) for file in results]
+
+    def insert_file(self, name: str) -> int:
+        with self.engine.connect() as con:
+            id = con.execute(
+                sa.text('INSERT INTO files (name) VALUES(:name) RETURNING files.id'),
+                {'name': name}
+            ).first()[0]
+            con.commit()
+        return id
+
+    # TODO: add foreign key support as event listener on all sqlalchemy events
+    def delete_file(self, name: str) -> int | None:
+        with self.engine.connect() as con:
+            con.execute(sa.text('PRAGMA foreign_keys = ON'))
+            maybeId = con.execute(
+                sa.text('DELETE FROM files WHERE name = :name RETURNING id'), {'name': name}
+            ).first()
+            con.commit()
+        return maybeId[0] if maybeId is not None else None
 
     def fetch_all_items(self) -> list[Item]:
         with self.engine.connect() as con:
             results = con.execute(
                 sa.text('SELECT '
                         'item.id, '
-                        'item.filename, '
+                        'item.file_id, '
                         'item.x, '
                         'item.y, '
                         'item.created_at, '
@@ -19,11 +50,11 @@ class DB:
             ).fetchall()
         return [Item(**item._asdict()) for item in results]
 
-    def insert_item(self, filename: str, x: int, y: int) -> int:
+    def insert_item(self, file_id: int, x: int, y: int) -> int:
         with self.engine.connect() as con:
             id = con.execute(
-                sa.text('INSERT INTO items (filename, x, y) VALUES(:filename, :x, :y) RETURNING items.id'),
-                {'filename': filename, 'x': x, 'y': y}
+                sa.text('INSERT INTO items (file_id, x, y) VALUES(:file_id, :x, :y) RETURNING items.id'),
+                {'file_id': file_id, 'x': x, 'y': y}
             ).first()[0]
             con.commit()
         return id
@@ -43,11 +74,12 @@ class DB:
             result = con.execute(
                 sa.text('SELECT '
                         'item.id, '
-                        'item.filename, '
+                        'item.file_id, '
                         'item.x, '
                         'item.y, '
                         'item.created_at, '
-                        'item.updated_at FROM items item WHERE filename = :filename'), {'filename': filename}
+                        'item.updated_at FROM items item JOIN files file ON item.file_id = file.id '
+                        'WHERE file.name = :filename'), {'filename': filename}
             )
         return [Item(**item._asdict()) for item in result.fetchall()]
 
@@ -99,7 +131,8 @@ class DB:
                         'box.created_at, '
                         'box.updated_at FROM boxes box '
                         'JOIN items item ON box.item_id = item.id '
-                        'WHERE item.filename = :filename'), {'filename': filename}
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE file.name = :filename'), {'filename': filename}
             )
         return [Box(**box._asdict()) for box in result.fetchall()]
 
@@ -148,6 +181,7 @@ class DB:
                         'link.updated_at FROM links link '
                         'JOIN boxes box ON link.box_id = box.id '
                         'JOIN items item ON box.item_id = item.id '
-                        'WHERE item.filename = :filename'), {'filename': filename}
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE file.name = :filename'), {'filename': filename}
             )
         return [Link(**link._asdict()) for link in result.fetchall()]

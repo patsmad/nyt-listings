@@ -40,4 +40,4 @@ def downgrade():
     query = """
         DROP TABLE links;
         """
-    conn.execute(query)
+    conn.execute(sa.text(query))

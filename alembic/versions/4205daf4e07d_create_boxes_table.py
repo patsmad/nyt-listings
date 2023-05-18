@@ -42,4 +42,4 @@ def downgrade():
     query = """
         DROP TABLE boxes;
         """
-    conn.execute(query)
+    conn.execute(sa.text(query))

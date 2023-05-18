@@ -1,10 +1,8 @@
 from datetime import datetime
 from pydantic import BaseModel
 
-class Item(BaseModel):
+class File(BaseModel):
     id: int
-    file_id: int
-    x: int
-    y: int
+    name: str
     created_at: datetime
     updated_at: datetime
