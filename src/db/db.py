@@ -1,6 +1,7 @@
-import sqlalchemy as sa
 from model.item import Item
 from model.box import Box
+from model.link import Link
+import sqlalchemy as sa
 
 class DB:
     engine: sa.Engine = sa.create_engine('sqlite:///../../data/NYTListings.db')
@@ -50,7 +51,7 @@ class DB:
             )
         return [Item(**item._asdict()) for item in result.fetchall()]
 
-    def fetch_all_boxes(self):
+    def fetch_all_boxes(self) -> list[Box]:
         with self.engine.connect() as con:
             results = con.execute(
                 sa.text('SELECT '
@@ -84,3 +85,69 @@ class DB:
             ).first()
             con.commit()
         return maybeId[0] if maybeId is not None else None
+
+    def fetch_file_boxes(self, filename: str) -> list[Box]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id, '
+                        'box.item_id, '
+                        'box.left, '
+                        'box.top, '
+                        'box.width, '
+                        'box.height, '
+                        'box.created_at, '
+                        'box.updated_at FROM boxes box '
+                        'JOIN items item ON box.item_id = item.id '
+                        'WHERE item.filename = :filename'), {'filename': filename}
+            )
+        return [Box(**box._asdict()) for box in result.fetchall()]
+
+    def fetch_all_links(self) -> list[Link]:
+        with self.engine.connect() as con:
+            results = con.execute(
+                sa.text('SELECT '
+                        'link.id, '
+                        'link.box_id, '
+                        'link.link, '
+                        'link.confirmed, '
+                        'link.created_at, '
+                        'link.updated_at FROM links link')
+            ).fetchall()
+        return [Link(**link._asdict()) for link in results]
+
+    def insert_link(self, box_id: int, link: str, confirmed: bool | None = None) -> int:
+        with self.engine.connect() as con:
+            id = con.execute(
+                sa.text('INSERT INTO links (box_id, link, confirmed) '
+                        'VALUES(:box_id, :link, :confirmed) RETURNING links.id'),
+                {'box_id': box_id, 'link': link, 'confirmed': confirmed if confirmed is not None else 0}
+            ).first()[0]
+            con.commit()
+        return id
+
+    # TODO: add foreign key support as event listener on all sqlalchemy events
+    def delete_link(self, id: int) -> int | None:
+        with self.engine.connect() as con:
+            con.execute(sa.text('PRAGMA foreign_keys = ON'))
+            maybeId = con.execute(
+                sa.text('DELETE FROM links WHERE id = :id RETURNING id'), {'id': id}
+            ).first()
+            con.commit()
+        return maybeId[0] if maybeId is not None else None
+
+    def fetch_file_links(self, filename: str) -> list[Link]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link.id, '
+                        'link.box_id, '
+                        'link.link, '
+                        'link.confirmed, '
+                        'link.created_at, '
+                        'link.updated_at FROM links link '
+                        'JOIN boxes box ON link.box_id = box.id '
+                        'JOIN items item ON box.item_id = item.id '
+                        'WHERE item.filename = :filename'), {'filename': filename}
+            )
+        return [Link(**link._asdict()) for link in result.fetchall()]

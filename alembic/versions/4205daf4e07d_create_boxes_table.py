@@ -34,7 +34,7 @@ def upgrade():
                 ON DELETE CASCADE
                 );
         """
-    conn.execute(query)
+    conn.execute(sa.text(query))
 
 
 def downgrade():

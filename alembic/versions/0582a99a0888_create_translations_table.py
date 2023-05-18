@@ -28,7 +28,7 @@ def upgrade():
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     """
-    conn.execute(query)
+    conn.execute(sa.text(query))
 
 
 def downgrade():

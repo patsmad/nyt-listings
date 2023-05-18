@@ -23,7 +23,7 @@ def upgrade():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             box_id INTEGER NOT NULL,
             link varchar(50),
-            confirmed TINYINT(1) DEFAULT 0,
+            confirmed TINYINT(1) DEFAULT 0 NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT fk_box
@@ -32,7 +32,7 @@ def upgrade():
                 ON DELETE CASCADE
                 );
         """
-    conn.execute(query)
+    conn.execute(sa.text(query))
 
 
 def downgrade():
