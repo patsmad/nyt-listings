@@ -27,7 +27,6 @@ class DB:
             con.commit()
         return id
 
-    # TODO: add foreign key support as event listener on all sqlalchemy events
     def delete_file(self, name: str) -> int | None:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
@@ -59,7 +58,6 @@ class DB:
             con.commit()
         return id
 
-    # TODO: add foreign key support as event listener on all sqlalchemy events
     def delete_item(self, id: int) -> int | None:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
@@ -108,7 +106,6 @@ class DB:
             con.commit()
         return id
 
-    # TODO: add foreign key support as event listener on all sqlalchemy events
     def delete_box(self, id: int) -> int | None:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
@@ -159,7 +156,6 @@ class DB:
             con.commit()
         return id
 
-    # TODO: add foreign key support as event listener on all sqlalchemy events
     def delete_link(self, id: int) -> int | None:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
