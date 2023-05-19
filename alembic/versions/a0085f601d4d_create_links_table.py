@@ -22,8 +22,8 @@ def upgrade():
         CREATE TABLE links(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             box_id INTEGER NOT NULL,
-            link varchar(50),
-            confirmed TINYINT(1) DEFAULT 0 NOT NULL,
+            link varchar(50) NOT NULL,
+            confirmed TINYINT(1) NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT fk_box
