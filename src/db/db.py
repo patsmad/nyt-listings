@@ -1,11 +1,12 @@
-from model.item import Item
-from model.box import Box
-from model.link import Link
-from model.file import File
+from .model.item import Item
+from .model.box import Box
+from .model.link import Link
+from .model.file import File
 import sqlalchemy as sa
 
 class DB:
-    engine: sa.Engine = sa.create_engine('sqlite:///../../data/NYTListings.db')
+    def __init__(self, engine: sa.Engine):
+        self.engine = engine
 
     def fetch_all_files(self) -> list[File]:
         with self.engine.connect() as con:
