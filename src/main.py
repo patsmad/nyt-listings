@@ -20,10 +20,17 @@ api: API = API(fetcher)
 def files() -> list[dict]:
    return [file.to_dict() for file in api.get_all_files()]
 
-# TODO: This should return file data in addition to items (not file_id). Item class?
 @app.route('/items/')
 def items() -> list[dict]:
    return [item.to_dict() for item in api.get_all_items()]
+
+@app.route('/boxes/')
+def boxes() -> list[dict]:
+   return [box.to_dict() for box in api.get_all_boxes()]
+
+@app.route('/links/')
+def links() -> list[dict]:
+   return [link.to_dict() for link in api.get_all_links()]
 
 if __name__ == '__main__':
    app.run(debug = True)
