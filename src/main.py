@@ -1,19 +1,11 @@
-from api.api import API
-from api.fetcher import Fetcher
-from db.db import DB
-from util.config import Config
-
+from builder import api_builder
 from flask import Flask
-import sqlalchemy as sa
+from util.config import Config
 
 config = Config()
 app = Flask(__name__)
 
-# TODO: This is correct, but might want to think through best practice
-engine: sa.Engine = sa.create_engine('sqlite:///../data/NYTListings.db')
-db: DB = DB(engine)
-fetcher: Fetcher = Fetcher(db)
-api: API = API(fetcher)
+api = api_builder.build()
 
 # TODO: Add in wrapper to check api key on each call automatically
 @app.route('/files/')
