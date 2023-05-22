@@ -2,13 +2,13 @@ from api.api import API
 from api.fetcher import Fetcher
 from db.db import DB
 import sqlalchemy as sa
-from typing import TypeVar, Generic, Callable
+from typing import TypeVar, Generic, Callable, Optional
 
 T = TypeVar('T')
 
 class Builder(Generic[T]):
     def __init__(self, fnc: Callable[[], T]) -> None:
-        self.cached_object: T | None = None
+        self.cached_object: Optional[T] = None
         self.fetcher: Callable[[], T] = fnc
 
     def build(self):

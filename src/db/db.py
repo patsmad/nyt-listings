@@ -3,9 +3,10 @@ from .model.box import Box
 from .model.link import Link
 from .model.file import File
 import sqlalchemy as sa
+from typing import Optional
 
 class DB:
-    def __init__(self, engine: sa.Engine):
+    def __init__(self, engine: sa.Engine) -> None:
         self.engine = engine
 
     def fetch_all_files(self) -> list[File]:
@@ -28,7 +29,7 @@ class DB:
             con.commit()
         return id
 
-    def delete_file(self, name: str) -> int | None:
+    def delete_file(self, name: str) -> Optional[int]:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
             maybeId = con.execute(
@@ -59,7 +60,7 @@ class DB:
             con.commit()
         return id
 
-    def delete_item(self, id: int) -> int | None:
+    def delete_item(self, id: int) -> Optional[int]:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
             maybeId = con.execute(
@@ -107,7 +108,7 @@ class DB:
             con.commit()
         return id
 
-    def delete_box(self, id: int) -> int | None:
+    def delete_box(self, id: int) -> Optional[int]:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
             maybeId = con.execute(
@@ -157,7 +158,7 @@ class DB:
             con.commit()
         return id
 
-    def delete_link(self, id: int) -> int | None:
+    def delete_link(self, id: int) -> Optional[int]:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
             maybeId = con.execute(
