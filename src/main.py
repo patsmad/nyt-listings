@@ -1,9 +1,11 @@
 from builder import api_builder
 from flask import Flask
+from flask_cors import CORS
 from util.config import Config
 
 config = Config()
 app = Flask(__name__)
+CORS(app)
 
 api = api_builder.build()
 
