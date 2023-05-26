@@ -20,6 +20,18 @@ class DB:
             ).fetchall()
         return [File(**file._asdict()) for file in results]
 
+    def fetch_file(self, name: str) -> Optional[File]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'file.id, '
+                        'file.name, '
+                        'file.created_at, '
+                        'file.updated_at FROM files file WHERE file.name = :name'),
+                {'name': name}
+            ).fetchone()
+        return File(**result._asdict()) if result is not None else None
+
     def insert_file(self, name: str) -> int:
         with self.engine.connect() as con:
             id = con.execute(
@@ -37,19 +49,6 @@ class DB:
             ).first()
             con.commit()
         return maybeId[0] if maybeId is not None else None
-
-    def fetch_all_items(self) -> list[Item]:
-        with self.engine.connect() as con:
-            results = con.execute(
-                sa.text('SELECT '
-                        'item.id, '
-                        'item.file_id, '
-                        'item.x, '
-                        'item.y, '
-                        'item.created_at, '
-                        'item.updated_at FROM items item')
-            ).fetchall()
-        return [Item(**item._asdict()) for item in results]
 
     def insert_item(self, file_id: int, x: int, y: int) -> int:
         with self.engine.connect() as con:
@@ -82,21 +81,6 @@ class DB:
                         'WHERE file.name = :filename'), {'filename': filename}
             )
         return [Item(**item._asdict()) for item in result.fetchall()]
-
-    def fetch_all_boxes(self) -> list[Box]:
-        with self.engine.connect() as con:
-            results = con.execute(
-                sa.text('SELECT '
-                        'box.id, '
-                        'box.item_id, '
-                        'box.left, '
-                        'box.top, '
-                        'box.width, '
-                        'box.height, '
-                        'box.created_at, '
-                        'box.updated_at FROM boxes box')
-            ).fetchall()
-        return [Box(**box._asdict()) for box in results]
 
     def insert_box(self, item_id: int, left: int, top: int, width: int, height: int) -> int:
         with self.engine.connect() as con:
@@ -134,19 +118,6 @@ class DB:
                         'WHERE file.name = :filename'), {'filename': filename}
             )
         return [Box(**box._asdict()) for box in result.fetchall()]
-
-    def fetch_all_links(self) -> list[Link]:
-        with self.engine.connect() as con:
-            results = con.execute(
-                sa.text('SELECT '
-                        'link.id, '
-                        'link.box_id, '
-                        'link.link, '
-                        'link.confirmed, '
-                        'link.created_at, '
-                        'link.updated_at FROM links link')
-            ).fetchall()
-        return [Link(**link._asdict()) for link in results]
 
     def insert_link(self, box_id: int, link: str, confirmed: bool | None = None) -> int:
         with self.engine.connect() as con:
