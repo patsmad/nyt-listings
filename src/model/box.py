@@ -1,33 +1,42 @@
 from __future__ import annotations
 from pydantic import BaseModel
 from src.db.model.box import Box as DBBox
-from src.model.item import Item
+from .link import Link
 
 class Box(BaseModel):
     id: int
-    item: Item
     left: int
     top: int
     width: int
     height: int
+    links: list[Link]
 
     def to_dict(self) -> dict:
         return {
             'id': self.id,
-            'item': self.item.to_dict(),
             'left': self.left,
             'top': self.top,
             'width': self.width,
-            'height': self.height
+            'height': self.height,
+            'links': [link.to_dict() for link in self.links]
         }
 
     @staticmethod
-    def from_db(box: DBBox, item: Item) -> Box:
+    def from_db(box: DBBox, links: list[Link]) -> Box:
         return Box(**{
             'id': box.id,
-            'item': item,
             'left': box.left,
             'top': box.top,
             'width': box.width,
-            'height': box.height
+            'height': box.height,
+            'links': links
         })
+
+    @staticmethod
+    def get_item_id_to_box_list(boxes: list[DBBox], box_id_to_links: dict[int, list[Link]]) -> dict[int, list[Box]]:
+        item_id_to_box_list: dict[int, list[Box]] = {}
+        for box in boxes:
+            if box.item_id not in item_id_to_box_list:
+                item_id_to_box_list[box.item_id] = []
+            item_id_to_box_list[box.item_id].append(Box.from_db(box, box_id_to_links.get(box.id, [])))
+        return item_id_to_box_list
