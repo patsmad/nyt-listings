@@ -20,15 +20,15 @@ class DB:
             ).fetchall()
         return [File(**file._asdict()) for file in results]
 
-    def fetch_file(self, name: str) -> Optional[File]:
+    def fetch_file(self, id: int) -> Optional[File]:
         with self.engine.connect() as con:
             result = con.execute(
                 sa.text('SELECT '
                         'file.id, '
                         'file.name, '
                         'file.created_at, '
-                        'file.updated_at FROM files file WHERE file.name = :name'),
-                {'name': name}
+                        'file.updated_at FROM files file WHERE file.id = :id'),
+                {'id': id}
             ).fetchone()
         return File(**result._asdict()) if result is not None else None
 
@@ -68,7 +68,7 @@ class DB:
             con.commit()
         return maybeId[0] if maybeId is not None else None
 
-    def fetch_file_items(self, filename: str) -> list[Item]:
+    def fetch_file_items(self, file_id: int) -> list[Item]:
         with self.engine.connect() as con:
             result = con.execute(
                 sa.text('SELECT '
@@ -78,7 +78,7 @@ class DB:
                         'item.y, '
                         'item.created_at, '
                         'item.updated_at FROM items item JOIN files file ON item.file_id = file.id '
-                        'WHERE file.name = :filename'), {'filename': filename}
+                        'WHERE file.id = :file_id'), {'file_id': file_id}
             )
         return [Item(**item._asdict()) for item in result.fetchall()]
 
@@ -101,7 +101,7 @@ class DB:
             con.commit()
         return maybeId[0] if maybeId is not None else None
 
-    def fetch_file_boxes(self, filename: str) -> list[Box]:
+    def fetch_file_boxes(self, file_id: int) -> list[Box]:
         with self.engine.connect() as con:
             result = con.execute(
                 sa.text('SELECT '
@@ -115,7 +115,7 @@ class DB:
                         'box.updated_at FROM boxes box '
                         'JOIN items item ON box.item_id = item.id '
                         'JOIN files file ON item.file_id = file.id '
-                        'WHERE file.name = :filename'), {'filename': filename}
+                        'WHERE file.id = :file_id'), {'file_id': file_id}
             )
         return [Box(**box._asdict()) for box in result.fetchall()]
 
@@ -138,7 +138,7 @@ class DB:
             con.commit()
         return maybeId[0] if maybeId is not None else None
 
-    def fetch_file_links(self, filename: str) -> list[Link]:
+    def fetch_file_links(self, file_id: int) -> list[Link]:
         with self.engine.connect() as con:
             result = con.execute(
                 sa.text('SELECT '
@@ -151,6 +151,6 @@ class DB:
                         'JOIN boxes box ON link.box_id = box.id '
                         'JOIN items item ON box.item_id = item.id '
                         'JOIN files file ON item.file_id = file.id '
-                        'WHERE file.name = :filename'), {'filename': filename}
+                        'WHERE file.id = :file_id'), {'file_id': file_id}
             )
         return [Link(**link._asdict()) for link in result.fetchall()]

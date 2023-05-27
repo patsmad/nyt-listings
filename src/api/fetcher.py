@@ -12,8 +12,8 @@ class Fetcher:
     def get_all_files(self) -> list[File]:
         return [File.from_db(file) for file in self.db.fetch_all_files()]
 
-    def get_file(self, filename: str) -> AnnotatedFile:
-        box_id_to_link: dict[int, list[Link]] = Link.get_box_id_to_link_list(self.db.fetch_file_links(filename))
-        item_id_to_box: dict[int, list[Box]] = Box.get_item_id_to_box_list(self.db.fetch_file_boxes(filename), box_id_to_link)
-        item_list: list[Item] = Item.get_list(self.db.fetch_file_items(filename), item_id_to_box)
-        return AnnotatedFile.from_db(self.db.fetch_file(filename), item_list)
+    def get_file(self, file_id: id) -> AnnotatedFile:
+        box_id_to_link: dict[int, list[Link]] = Link.get_box_id_to_link_list(self.db.fetch_file_links(file_id))
+        item_id_to_box: dict[int, list[Box]] = Box.get_item_id_to_box_list(self.db.fetch_file_boxes(file_id), box_id_to_link)
+        item_list: list[Item] = Item.get_list(self.db.fetch_file_items(file_id), item_id_to_box)
+        return AnnotatedFile.from_db(self.db.fetch_file(file_id), item_list)

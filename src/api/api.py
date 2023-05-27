@@ -7,5 +7,5 @@ class API:
     def get_all_files(self) -> list[File]:
         return self.fetcher.get_all_files()
 
-    def get_file(self, filename: str) -> AnnotatedFile:
-        return self.fetcher.get_file(filename)
+    def get_file(self, file_id: int) -> AnnotatedFile:
+        return self.fetcher.get_file(file_id)
