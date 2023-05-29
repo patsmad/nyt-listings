@@ -15,7 +15,7 @@ class Link(BaseModel):
             'id': self.id,
             'link': self.link,
             'confirmed': self.confirmed,
-            'link_info': self.link_info.to_dict()
+            'link_info': self.link_info.to_dict() if self.link_info is not None else None
         }
 
     @staticmethod
