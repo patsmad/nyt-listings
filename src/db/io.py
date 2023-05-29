@@ -1,9 +1,10 @@
-from src.util.io import readJSON
+from src.util.io import readJSON, downloadFile, unzipGZFile, readTSV, mkdir, rmdir
 from .db import DB
 from .model.box import InputBox
 from .model.file import InputFile
 from .model.item import InputItem
 from .model.link import InputLink
+from .model.link_info import InputLinkInfo
 
 class DBIO:
     def __init__(self, db: DB):
@@ -11,6 +12,7 @@ class DBIO:
 
     def to_input_item(self, file_id: int, item: dict) -> InputItem:
         return InputItem(file_id=file_id, x=item['x'], y=item['y'])
+
     def to_input_box(self, item_id: int, box: dict) -> InputBox:
         return InputBox(item_id=item_id, left=box['left'], top=box['top'], width=box['width'], height=box['height'])
 
@@ -18,7 +20,6 @@ class DBIO:
         confirmed: bool = link['confirmed'] if link['confirmed'] is not None else False
         return InputLink(box_id=box_id, link=link['link'], confirmed=confirmed)
 
-    # TODO: Would be nice to have an add / replace option here
     def from_file_to_db(self, fname) -> None:
         files_to_add: dict = readJSON(fname)
         for file in files_to_add:
@@ -34,3 +35,24 @@ class DBIO:
                             self.db._insert_link(con, self.to_input_link(box_id, link))
                 con.commit()
             print(file_id, count)
+
+    def update_imdb_data(self):
+        mkdir('data/tmp')
+        for fname in ['title.basics.tsv.gz']:
+            downloadFile(f'https://datasets.imdbws.com/{fname}', f'data/tmp/{fname}')
+            unzipGZFile(f'data/tmp/{fname}')
+            full_dict = {}
+            for row in readTSV(f'data/tmp/{fname.replace(".gz", "")}'):
+                link = f'https://www.imdb.com/title/{row["tconst"]}/'
+                full_dict[link] = {
+                    'link': link,
+                    'title': row['primaryTitle'],
+                    'year': row['startYear']
+                }
+
+            with self.db.engine.connect() as con:
+                for link in self.db.fetch_distinct_links():
+                    if link in full_dict:
+                        print(self.db._insert_or_update_link_info(con, InputLinkInfo(**full_dict[link])))
+                con.commit()
+        rmdir('data/tmp')

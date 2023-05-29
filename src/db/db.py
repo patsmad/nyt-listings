@@ -1,7 +1,9 @@
 from .model.item import Item, InputItem
 from .model.box import Box, InputBox
 from .model.link import Link, InputLink
+from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
+from datetime import datetime
 import sqlalchemy as sa
 from typing import Optional
 
@@ -181,3 +183,65 @@ class DB:
                         'WHERE file.id = :file_id'), {'file_id': file_id}
             )
         return [Link(**link._asdict()) for link in result.fetchall()]
+
+    def fetch_distinct_links(self):
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT DISTINCT link FROM links')
+            ).fetchall()
+        return [link[0] for link in result]
+
+    def _fetch_link_info_id(self, con: sa.Connection, link_info: InputLinkInfo) -> int | None:
+        id = con.execute(
+            sa.text('SELECT id FROM link_info WHERE link = :link'),
+            link_info.dict()
+        ).fetchone()
+        if id is not None:
+            return id[0]
+
+    def _insert_link_info(self, con: sa.Connection, link_info: InputLinkInfo) -> int:
+        return con.execute(
+            sa.text('INSERT INTO link_info (link, title, year) '
+                    'VALUES(:link, :title, :year) RETURNING link_info.id'),
+            link_info.dict()
+        ).first()[0]
+
+    def _update_link_info(self, con: sa.Connection, link_info: InputLinkInfo, link_info_id: int) -> int:
+        return con.execute(
+            sa.text('UPDATE link_info '
+                    'SET title = :title, year = :year, updated_at = CURRENT_TIMESTAMP '
+                    'WHERE id = :id RETURNING id'),
+            {'title': link_info.title, 'year': link_info.year, 'id': link_info_id}
+        ).first()[0]
+
+    def _insert_or_update_link_info(self, con: sa.Connection, link_info: InputLinkInfo) -> int:
+        maybe_id = self._fetch_link_info_id(con, link_info)
+        if maybe_id is None:
+            id = self._insert_link_info(con, link_info)
+        else:
+            id = self._update_link_info(con, link_info, maybe_id)
+        return id
+
+    def insert_or_update_link_info(self, link_info: InputLinkInfo) -> int:
+        with self.engine.connect() as con:
+            id = self._insert_or_update_link_info(con, link_info)
+            con.commit()
+        return id
+
+    def fetch_file_links_info(self, file_id: int) -> list[LinkInfo]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link_info.id, '
+                        'link_info.link, '
+                        'link_info.title, '
+                        'link_info.year, '
+                        'link_info.created_at, '
+                        'link_info.updated_at FROM link_info link_info '
+                        'JOIN links link ON link_info.link = link.link '
+                        'JOIN boxes box ON link.box_id = box.id '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE file.id = :file_id'), {'file_id': file_id}
+            )
+        return [LinkInfo(**link_info._asdict()) for link_info in result.fetchall()]
