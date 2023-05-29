@@ -37,11 +37,16 @@ def from_file_to_db(filename):
     db_io.from_file_to_db(filename)
 
 @click.command()
+def update_imdb_data():
+    db_io.update_imdb_data()
+
+@click.command()
 def server():
     app.run(debug=True)
 
 cli.add_command(server)
 cli.add_command(from_file_to_db)
+cli.add_command(update_imdb_data)
 
 # TODO: AllLinks would be the next most useful endpoint here. It would return a list of FileLinks which would
 # be something like FileLink(file_id, file_name, item_id, box_id, link)
