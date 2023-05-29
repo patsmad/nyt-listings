@@ -8,3 +8,8 @@ class Link(BaseModel):
     confirmed: bool
     created_at: datetime
     updated_at: datetime
+
+class InputLink(BaseModel):
+    box_id: int
+    link: str
+    confirmed: bool
