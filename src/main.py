@@ -1,4 +1,7 @@
-from builder import api_builder
+from api.api import API
+from builder import api_builder, db_io_builder
+import click
+from db.io import DBIO
 from flask import Flask, request
 from flask_cors import CORS
 from util.config import Config
@@ -7,7 +10,8 @@ config = Config()
 app = Flask(__name__)
 CORS(app)
 
-api = api_builder.build()
+api: API = api_builder.build()
+db_io: DBIO = db_io_builder.build()
 
 @app.route('/files/', methods=['GET'])
 @config.api_check
@@ -23,6 +27,22 @@ def file() -> dict:
    else:
       raise Exception('Must provide ?filename=<filename> for file request')
 
+@click.group()
+def cli():
+    pass
+
+@click.command()
+@click.argument('filename')
+def from_file_to_db(filename):
+    db_io.from_file_to_db(filename)
+
+@click.command()
+def server():
+    app.run(debug=True)
+
+cli.add_command(server)
+cli.add_command(from_file_to_db)
+
 # TODO: AllLinks would be the next most useful endpoint here. It would return a list of FileLinks which would
 # be something like FileLink(file_id, file_name, item_id, box_id, link)
 # The item/box info is somewhat unnecessary at the moment, this would be for a table for example
@@ -31,4 +51,4 @@ def file() -> dict:
 # But first I think I would like to put the above endpoint to work on a frontend system
 
 if __name__ == '__main__':
-   app.run(debug = True)
+    cli()

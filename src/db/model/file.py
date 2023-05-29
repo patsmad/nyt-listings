@@ -6,3 +6,6 @@ class File(BaseModel):
     name: str
     created_at: datetime
     updated_at: datetime
+
+class InputFile(BaseModel):
+    name: str

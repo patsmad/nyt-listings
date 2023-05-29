@@ -8,3 +8,8 @@ class Item(BaseModel):
     y: int
     created_at: datetime
     updated_at: datetime
+
+class InputItem(BaseModel):
+    file_id: int
+    x: int
+    y: int

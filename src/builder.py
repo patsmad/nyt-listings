@@ -1,6 +1,7 @@
 from api.api import API
 from api.fetcher import Fetcher
 from db.db import DB
+from db.io import DBIO
 import sqlalchemy as sa
 from typing import TypeVar, Generic, Callable, Optional
 
@@ -44,7 +45,15 @@ class APIBuilder(Builder[API]):
     def get_api(self) -> API:
         return API(fetcher_builder.build())
 
+class DBIOBuilder(Builder[DBIO]):
+    def __init__(self) -> None:
+        super().__init__(self.get_api)
+
+    def get_api(self) -> DBIO:
+        return DBIO(db_builder.build())
+
 engine_builder: EngineBuilder = EngineBuilder()
 db_builder: DBBuilder = DBBuilder()
 fetcher_builder: FetcherBuilder = FetcherBuilder()
 api_builder: APIBuilder = APIBuilder()
+db_io_builder: DBIOBuilder = DBIOBuilder()
