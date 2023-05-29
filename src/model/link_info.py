@@ -6,6 +6,8 @@ class LinkInfo(BaseModel):
     id: int
     link: str
     title: str
+    rating: float
+    votes: int
     year: int
 
     def to_dict(self) -> dict:
@@ -13,6 +15,8 @@ class LinkInfo(BaseModel):
             'id': self.id,
             'link': self.link,
             'title': self.title,
+            'rating': self.rating,
+            'votes': self.votes,
             'year': self.year
         }
 
@@ -22,6 +26,8 @@ class LinkInfo(BaseModel):
             'id': link_info.id,
             'link': link_info.link,
             'title': link_info.title,
+            'rating': link_info.rating,
+            'votes': link_info.votes,
             'year': link_info.year
         })
 

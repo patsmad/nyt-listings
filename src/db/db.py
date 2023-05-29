@@ -201,17 +201,17 @@ class DB:
 
     def _insert_link_info(self, con: sa.Connection, link_info: InputLinkInfo) -> int:
         return con.execute(
-            sa.text('INSERT INTO link_info (link, title, year) '
-                    'VALUES(:link, :title, :year) RETURNING link_info.id'),
+            sa.text('INSERT INTO link_info (link, title, year, rating, votes) '
+                    'VALUES(:link, :title, :year, :rating, :votes) RETURNING link_info.id'),
             link_info.dict()
         ).first()[0]
 
     def _update_link_info(self, con: sa.Connection, link_info: InputLinkInfo, link_info_id: int) -> int:
         return con.execute(
             sa.text('UPDATE link_info '
-                    'SET title = :title, year = :year, updated_at = CURRENT_TIMESTAMP '
+                    'SET title = :title, year = :year, rating = :rating, votes = :votes, updated_at = CURRENT_TIMESTAMP '
                     'WHERE id = :id RETURNING id'),
-            {'title': link_info.title, 'year': link_info.year, 'id': link_info_id}
+            {'title': link_info.title, 'year': link_info.year, 'rating': link_info.rating, 'votes': link_info.votes, 'id': link_info_id}
         ).first()[0]
 
     def _insert_or_update_link_info(self, con: sa.Connection, link_info: InputLinkInfo) -> int:
@@ -236,6 +236,8 @@ class DB:
                         'link_info.link, '
                         'link_info.title, '
                         'link_info.year, '
+                        'link_info.rating, '
+                        'link_info.votes, '
                         'link_info.created_at, '
                         'link_info.updated_at FROM link_info link_info '
                         'JOIN links link ON link_info.link = link.link '

@@ -38,21 +38,28 @@ class DBIO:
 
     def update_imdb_data(self):
         mkdir('data/tmp')
-        for fname in ['title.basics.tsv.gz']:
+        for fname in ['title.basics.tsv.gz', 'title.ratings.tsv.gz']:
             downloadFile(f'https://datasets.imdbws.com/{fname}', f'data/tmp/{fname}')
             unzipGZFile(f'data/tmp/{fname}')
-            full_dict = {}
-            for row in readTSV(f'data/tmp/{fname.replace(".gz", "")}'):
-                link = f'https://www.imdb.com/title/{row["tconst"]}/'
-                full_dict[link] = {
-                    'link': link,
-                    'title': row['primaryTitle'],
-                    'year': row['startYear']
-                }
+        full_dict = {}
+        for row in readTSV('data/tmp/title.basics.tsv'):
+            link = f'https://www.imdb.com/title/{row["tconst"]}/'
+            full_dict[link] = {
+                'link': link,
+                'title': row['primaryTitle'],
+                'year': row['startYear'],
+                'rating': 0.0,
+                'votes': 0
+            }
+        for row in readTSV('data/tmp/title.ratings.tsv'):
+            link = f'https://www.imdb.com/title/{row["tconst"]}/'
+            if link in full_dict:
+                full_dict[link]['rating'] = row['averageRating']
+                full_dict[link]['votes'] = row['numVotes']
 
-            with self.db.engine.connect() as con:
-                for link in self.db.fetch_distinct_links():
-                    if link in full_dict:
-                        print(self.db._insert_or_update_link_info(con, InputLinkInfo(**full_dict[link])))
-                con.commit()
+        with self.db.engine.connect() as con:
+            for link in self.db.fetch_distinct_links():
+                if link in full_dict:
+                    print(self.db._insert_or_update_link_info(con, InputLinkInfo(**full_dict[link])))
+            con.commit()
         rmdir('data/tmp')
