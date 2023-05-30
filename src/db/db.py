@@ -52,6 +52,22 @@ class DB:
             con.commit()
         return maybeId[0] if maybeId is not None else None
 
+    def fetch_link_id_to_files(self, link: str) -> dict[int, File]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link.id as link_id, '
+                        'file.id, '
+                        'file.name, '
+                        'file.created_at, '
+                        'file.updated_at FROM links link '
+                        'JOIN boxes box ON link.box_id = box.id '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE link.link = :link'), {'link': link}
+            )
+        return {file.link_id: File(**file._asdict()) for file in result.fetchall()}
+
     def _insert_item(self, con: sa.Connection, item: InputItem) -> int:
         return con.execute(
             sa.text('INSERT INTO items (file_id, x, y) VALUES(:file_id, :x, :y) RETURNING items.id'),
@@ -184,6 +200,20 @@ class DB:
             )
         return [Link(**link._asdict()) for link in result.fetchall()]
 
+    def fetch_all_links_for_link(self, link: str) -> list[Link]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link.id, '
+                        'link.box_id, '
+                        'link.link, '
+                        'link.confirmed, '
+                        'link.created_at, '
+                        'link.updated_at FROM links link '
+                        'WHERE link.link = :link'), {'link': link}
+            )
+        return [Link(**l._asdict()) for l in result.fetchall()]
+
     def fetch_distinct_links(self):
         with self.engine.connect() as con:
             result = con.execute(
@@ -247,3 +277,20 @@ class DB:
                         'WHERE file.id = :file_id'), {'file_id': file_id}
             )
         return [LinkInfo(**link_info._asdict()) for link_info in result.fetchall()]
+
+    def get_link_info(self, link: str) -> Optional[LinkInfo]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link_info.id, '
+                        'link_info.link, '
+                        'link_info.title, '
+                        'link_info.year, '
+                        'link_info.rating, '
+                        'link_info.votes, '
+                        'link_info.created_at, '
+                        'link_info.updated_at FROM link_info link_info '
+                        'WHERE link_info.link = :link'), {'link': link}
+            ).fetchone()
+        if result is not None:
+            return LinkInfo(**result._asdict())

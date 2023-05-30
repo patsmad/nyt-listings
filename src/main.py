@@ -27,6 +27,15 @@ def file() -> dict:
    else:
       raise Exception('Must provide ?filename=<filename> for file request')
 
+@app.route('/link/', methods=['GET'])
+@config.api_check
+def link() -> dict:
+   link: str = request.args.get('link')
+   if link is not None:
+       return api.get_link(link).to_dict()
+   else:
+       raise Exception('Must provide ?link=<link> for link request')
+
 @click.group()
 def cli():
     pass
