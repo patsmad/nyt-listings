@@ -15,6 +15,11 @@ class Fetcher:
     def get_all_files(self) -> list[File]:
         return [File.from_db(file) for file in self.db.fetch_all_files()]
 
+    def get_file_name(self, file_id: int) -> Optional[str]:
+        file_db = self.db.fetch_file(file_id)
+        if file_db is not None:
+            return file_db.name
+
     def get_file(self, file_id: id) -> AnnotatedFile:
         link_to_link_info: dict[str, LinkInfo] = LinkInfo.get_link_to_link_info(self.db.fetch_file_links_info(file_id))
         box_id_to_link: dict[int, list[Link]] = Link.get_box_id_to_link_list(self.db.fetch_file_links(file_id), link_to_link_info)

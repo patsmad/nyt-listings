@@ -6,6 +6,7 @@ from flask import Flask, request, send_from_directory, Response
 from flask_cors import CORS
 from util.config import Config
 from util.io import data_path, pathExists
+from typing import Optional
 
 config = Config()
 app = Flask(__name__)
@@ -42,10 +43,11 @@ def link() -> dict:
 @app.route('/img/', methods=['GET'])
 @config.api_check
 def img() -> Response:
-    filename: str = request.args.get('filename')
-    if filename is not None:
-        if pathExists(f'data/files/{filename}'):
-            return send_from_directory(f'{data_path}/data/files', filename)
+    maybe_file_id: Optional[str] = request.args.get('file_id')
+    if maybe_file_id is not None:
+        file_name: Optional[str] = api.get_file_name(int(maybe_file_id))
+        if file_name is not None and pathExists(f'data/files/{file_name}'):
+            return send_from_directory(f'{data_path}/data/files', file_name)
         else:
             raise Exception('Invalid filename request')
     else:
