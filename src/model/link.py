@@ -27,6 +27,12 @@ class Link(BaseModel):
             'link_info': link_info
         })
 
+    def update(self, payload: dict) -> None:
+        if 'link' in payload:
+            self.link = payload['link']
+        if 'confirmed' in payload:
+            self.confirmed = payload['confirmed']
+
     @staticmethod
     def get_box_id_to_link_list(links: list[DBLink], links_info: dict[str, LinkInfo]) -> dict[int, list[Link]]:
         box_id_to_link_list: dict[int, list[Link]] = {}

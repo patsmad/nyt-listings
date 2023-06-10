@@ -1,4 +1,5 @@
 from src.db.db import DB
+from src.db.model.link import Link as DBLink
 from src.model.annotated_file import AnnotatedFile
 from src.model.file import File
 from src.model.item import Item
@@ -33,3 +34,9 @@ class Fetcher:
         link_id_to_files: dict[int, File] = {link_id: File.from_db(file) for link_id, file in self.db.fetch_link_id_to_files(link).items()}
         link_files: list[LinkFile] = [LinkFile.build(l, link_id_to_files) for l in links]
         return LinkFiles.build(link, link_info, link_files)
+
+    def fetch_link(self, link_id: int) -> Optional[Link]:
+        db_link: Optional[DBLink] = self.db.fetch_link(link_id)
+        if db_link is not None:
+            link_info: Optional[LinkInfo] = LinkInfo.from_db(self.db.get_link_info(db_link.link))
+            return Link.from_db(db_link, link_info=link_info)
