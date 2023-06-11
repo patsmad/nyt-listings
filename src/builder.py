@@ -1,5 +1,6 @@
 from api.api import API
 from api.fetcher import Fetcher
+from api.updater import Updater
 from db.db import DB
 from db.io import DBIO
 import sqlalchemy as sa
@@ -38,12 +39,19 @@ class FetcherBuilder(Builder[Fetcher]):
     def get_fetcher(self) -> Fetcher:
         return Fetcher(db_builder.build())
 
+class UpdaterBuilder(Builder[Updater]):
+    def __init__(self) -> None:
+        super().__init__(self.get_updater)
+
+    def get_updater(self) -> Updater:
+        return Updater(db_builder.build())
+
 class APIBuilder(Builder[API]):
     def __init__(self) -> None:
         super().__init__(self.get_api)
 
     def get_api(self) -> API:
-        return API(fetcher_builder.build())
+        return API(fetcher_builder.build(), updater_builder.build())
 
 class DBIOBuilder(Builder[DBIO]):
     def __init__(self) -> None:
@@ -55,5 +63,6 @@ class DBIOBuilder(Builder[DBIO]):
 engine_builder: EngineBuilder = EngineBuilder()
 db_builder: DBBuilder = DBBuilder()
 fetcher_builder: FetcherBuilder = FetcherBuilder()
+updater_builder: UpdaterBuilder = UpdaterBuilder()
 api_builder: APIBuilder = APIBuilder()
 db_io_builder: DBIOBuilder = DBIOBuilder()

@@ -4,6 +4,7 @@ import click
 from db.io import DBIO
 from flask import Flask, request, send_from_directory, Response
 from flask_cors import CORS
+import json
 from util.config import Config
 from util.io import data_path, pathExists
 from typing import Optional
@@ -52,6 +53,33 @@ def img() -> Response:
             raise Exception('Invalid filename request')
     else:
         raise Exception('Must provide ?filename=<filename> for img request')
+
+@app.route('/link/update/', methods=['POST'])
+@config.api_check
+def link_update() -> dict:
+    payload: dict = json.loads(request.data)
+    updated_id: Optional[int] = api.update_link(payload)
+    if updated_id is not None:
+        return {'id': updated_id}
+    else:
+        raise Exception('Link id <{}> not found'.format(payload.get('id')))
+
+@app.route('/link/add/', methods=['POST'])
+@config.api_check
+def link_add() -> dict:
+    payload: dict = json.loads(request.data)
+    id: int = api.add_link(payload)
+    return {'id': id}
+
+@app.route('/item/delete/', methods=['POST'])
+@config.api_check
+def item_delete() -> dict:
+    payload: dict = json.loads(request.data)
+    id: Optional[int] = api.delete_item(payload)
+    if id is not None:
+        return {'id': id}
+    else:
+        raise Exception('Item id <{}> not found'.format(payload.get('id')))
 
 @click.group()
 def cli():

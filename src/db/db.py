@@ -1,9 +1,9 @@
 from .model.item import Item, InputItem
 from .model.box import Box, InputBox
 from .model.link import Link, InputLink
+from src.model.link import Link as ModelLink
 from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
-from datetime import datetime
 import sqlalchemy as sa
 from typing import Optional
 
@@ -183,6 +183,19 @@ class DB:
             con.commit()
         return maybeId[0] if maybeId is not None else None
 
+    def update_link(self, link: ModelLink) -> Optional[int]:
+        with self.engine.connect() as con:
+            maybeId = con.execute(
+                sa.text('UPDATE links '
+                        'SET link = :link, '
+                        'confirmed = :confirmed, '
+                        'updated_at = CURRENT_TIMESTAMP '
+                        'WHERE id = :id RETURNING id'),
+                {'id': link.id, 'link': link.link, 'confirmed': link.confirmed}
+            ).first()
+            con.commit()
+        return maybeId[0] if maybeId is not None else None
+
     def fetch_file_links(self, file_id: int) -> list[Link]:
         with self.engine.connect() as con:
             result = con.execute(
@@ -199,6 +212,20 @@ class DB:
                         'WHERE file.id = :file_id'), {'file_id': file_id}
             )
         return [Link(**link._asdict()) for link in result.fetchall()]
+
+    def fetch_link(self, link_id: int) -> Optional[Link]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link.id, '
+                        'link.box_id, '
+                        'link.link, '
+                        'link.confirmed, '
+                        'link.created_at, '
+                        'link.updated_at FROM links link '
+                        'WHERE link.id = :id'), {'id': link_id}
+            ).fetchone()
+        return Link(**result._asdict()) if result is not None else None
 
     def fetch_all_links_for_link(self, link: str) -> list[Link]:
         with self.engine.connect() as con:
