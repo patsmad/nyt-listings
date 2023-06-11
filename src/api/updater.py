@@ -14,3 +14,8 @@ class Updater:
     def add_link(self, payload: dict) -> int:
         link: InputLink = InputLink(**payload)
         return self.db.insert_link(link)
+
+    def delete_item(self, payload: dict) -> Optional[int]:
+        maybe_id = payload.get('id')
+        if maybe_id is not None:
+            return self.db.delete_item(maybe_id)

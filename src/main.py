@@ -62,7 +62,7 @@ def link_update() -> dict:
     if updated_id is not None:
         return {'id': updated_id}
     else:
-        raise Exception(f'Link id <{payload.get("id")}> not found')
+        raise Exception('Link id <{}> not found'.format(payload.get('id')))
 
 @app.route('/link/add/', methods=['POST'])
 @config.api_check
@@ -70,6 +70,16 @@ def link_add() -> dict:
     payload: dict = json.loads(request.data)
     id: int = api.add_link(payload)
     return {'id': id}
+
+@app.route('/item/delete/', methods=['POST'])
+@config.api_check
+def item_delete() -> dict:
+    payload: dict = json.loads(request.data)
+    id: Optional[int] = api.delete_item(payload)
+    if id is not None:
+        return {'id': id}
+    else:
+        raise Exception('Item id <{}> not found'.format(payload.get('id')))
 
 @click.group()
 def cli():

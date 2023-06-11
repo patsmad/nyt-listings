@@ -30,3 +30,6 @@ class API:
 
     def add_link(self, payload: dict) -> int:
         return self.updater.add_link(payload)
+
+    def delete_item(self, payload: dict) -> Optional[int]:
+        return self.updater.delete_item(payload)
