@@ -1,4 +1,4 @@
-from src.util.io import readJSON, downloadFile, unzipGZFile, readTSV, mkdir, rmdir
+from src.util.util_io import readJSON, downloadFile, unzipGZFile, readTSV, mkdir, rmdir
 from .db import DB
 from .model.box import InputBox
 from .model.file import InputFile

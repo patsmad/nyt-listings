@@ -155,6 +155,24 @@ class DB:
             )
         return [Box(**box._asdict()) for box in result.fetchall()]
 
+    def fetch_link_id_to_boxes(self, link: str) -> dict[int, Box]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link.id as link_id, '
+                        'box.id, '
+                        'box.item_id, '
+                        'box.left, '
+                        'box.top, '
+                        'box.width, '
+                        'box.height, '
+                        'box.created_at, '
+                        'box.updated_at FROM links link '
+                        'JOIN boxes box ON link.box_id = box.id '
+                        'WHERE link.link = :link'), {'link': link}
+            )
+        return {box.link_id: Box(**box._asdict()) for box in result.fetchall()}
+
     def _insert_link(self, con: sa.Connection, link: InputLink) -> int:
         return con.execute(
             sa.text('INSERT INTO links (box_id, link, confirmed) '

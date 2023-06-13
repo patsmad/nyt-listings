@@ -1,32 +1,49 @@
 from __future__ import annotations
 from pydantic import BaseModel
+from .box import Box
 from .file import File
 from .link import Link
 from .link_info import LinkInfo
 from typing import Optional
 
 class LinkFile(BaseModel):
+    file_id: int
+    file: str
+    box_id: int
+    left: int
+    top: int
+    width: int
+    height: int
     link_id: int
     confirmed: bool
-    file_id: int
-    name: str
 
     def to_dict(self) -> dict:
         return {
-            'link_id': self.link_id,
-            'confirmed': self.confirmed,
             'file_id': self.file_id,
-            'name': self.name
+            'file': self.file,
+            'box_id': self.box_id,
+            'left': self.left,
+            'top': self.top,
+            'width': self.width,
+            'height': self.height,
+            'link_id': self.link_id,
+            'confirmed': self.confirmed
         }
 
     @staticmethod
-    def build(link: Link, link_id_to_file: dict[int, File]) -> LinkFile:
+    def build(link: Link, link_id_to_file: dict[int, File], link_id_to_box: dict[int, Box]) -> LinkFile:
         file = link_id_to_file[link.id]
+        box = link_id_to_box[link.id]
         return LinkFile(**{
-            'link_id': link.id,
-            'confirmed': link.confirmed,
             'file_id': file.id,
-            'name': file.name
+            'file': file.name,
+            'box_id': box.id,
+            'left': box.left,
+            'top': box.top,
+            'width': box.width,
+            'height': box.height,
+            'link_id': link.id,
+            'confirmed': link.confirmed
         })
 
 class LinkFiles(BaseModel):

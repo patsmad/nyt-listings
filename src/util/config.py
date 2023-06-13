@@ -1,4 +1,4 @@
-from .io import readJSON
+from .util_io import readJSON
 from flask import request
 from functools import wraps
 from typing import Optional, Callable

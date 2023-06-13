@@ -2,11 +2,12 @@ from api.api import API
 from builder import api_builder, db_io_builder
 import click
 from db.io import DBIO
-from flask import Flask, request, send_from_directory, Response
+from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
 from util.config import Config
-from util.io import data_path, pathExists
+from util.util_io import data_path, pathExists
+from util.image import open_image, crop_image, image_to_buf
 from typing import Optional
 
 config = Config()
@@ -45,10 +46,17 @@ def link() -> dict:
 @config.api_check
 def img() -> Response:
     maybe_file_id: Optional[str] = request.args.get('file_id')
+    maybe_box: Optional[str] = request.args.get('box')
     if maybe_file_id is not None:
         file_name: Optional[str] = api.get_file_name(int(maybe_file_id))
         if file_name is not None and pathExists(f'data/files/{file_name}'):
-            return send_from_directory(f'{data_path}/data/files', file_name)
+            if maybe_box is None:
+                return send_from_directory(f'{data_path}/data/files', file_name)
+            else:
+                left, top, width, height = map(int, maybe_box.split(','))
+                img = open_image(f'{data_path}/data/files/{file_name}')
+                buf = image_to_buf(crop_image(img, left, top, width, height))
+                return send_file(buf, 'image/png')
         else:
             raise Exception('Invalid filename request')
     else:
@@ -101,13 +109,6 @@ def server():
 cli.add_command(server)
 cli.add_command(from_file_to_db)
 cli.add_command(update_imdb_data)
-
-# TODO: AllLinks would be the next most useful endpoint here. It would return a list of FileLinks which would
-# be something like FileLink(file_id, file_name, item_id, box_id, link)
-# The item/box info is somewhat unnecessary at the moment, this would be for a table for example
-# Eventually we'd also want to produce an AnnotatedFile whereby you can specific the specific single link to make the file from
-# Those would need the ability to get a single item and box based on id
-# But first I think I would like to put the above endpoint to work on a frontend system
 
 if __name__ == '__main__':
     cli()
