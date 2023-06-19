@@ -22,9 +22,5 @@ class Updater:
             return self.db.delete_item(maybe_id)
 
     def update_box(self, box: Box, payload: dict) -> Optional[int]:
-        print(box)
-        print(payload)
         box.update(payload)
-        print(box)
-        return None
-        #return self.db.update_box(box)
+        return self.db.update_box(box)
