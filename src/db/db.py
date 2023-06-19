@@ -2,6 +2,7 @@ from .model.item import Item, InputItem
 from .model.box import Box, InputBox
 from .model.link import Link, InputLink
 from src.model.link import Link as ModelLink
+from src.model.box import Box as ModelBox
 from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
 import sqlalchemy as sa
@@ -128,6 +129,21 @@ class DB:
             con.commit()
         return ids
 
+    def update_box(self, box: ModelBox) -> Optional[int]:
+        with self.engine.connect() as con:
+            maybeId = con.execute(
+                sa.text('UPDATE boxes '
+                        'SET left = :left, '
+                        'top = :top, '
+                        'width = :width, '
+                        'height = :height, '
+                        'updated_at = CURRENT_TIMESTAMP '
+                        'WHERE id = :id RETURNING id'),
+                {'id': box.id, 'left': box.left, 'top': box.top, 'width': box.width, 'height': box.height}
+            ).first()
+            con.commit()
+        return maybeId[0] if maybeId is not None else None
+
     def delete_box(self, id: int) -> Optional[int]:
         with self.engine.connect() as con:
             con.execute(sa.text('PRAGMA foreign_keys = ON'))
@@ -172,6 +188,22 @@ class DB:
                         'WHERE link.link = :link'), {'link': link}
             )
         return {box.link_id: Box(**box._asdict()) for box in result.fetchall()}
+
+    def fetch_box(self, box_id: int) -> Optional[Box]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id, '
+                        'box.item_id, '
+                        'box.left, '
+                        'box.top, '
+                        'box.width, '
+                        'box.height, '
+                        'box.created_at, '
+                        'box.updated_at FROM boxes box '
+                        'WHERE box.id = :id'), {'id': box_id}
+            ).fetchone()
+        return Box(**result._asdict()) if result is not None else None
 
     def _insert_link(self, con: sa.Connection, link: InputLink) -> int:
         return con.execute(
@@ -244,6 +276,20 @@ class DB:
                         'WHERE link.id = :id'), {'id': link_id}
             ).fetchone()
         return Link(**result._asdict()) if result is not None else None
+
+    def fetch_box_links(self, box_id: int) -> list[Link]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link.id, '
+                        'link.box_id, '
+                        'link.link, '
+                        'link.confirmed, '
+                        'link.created_at, '
+                        'link.updated_at FROM links link '
+                        'WHERE link.box_id = :box_id'), {'box_id': box_id}
+            )
+        return [Link(**l._asdict()) for l in result.fetchall()]
 
     def fetch_all_links_for_link(self, link: str) -> list[Link]:
         with self.engine.connect() as con:

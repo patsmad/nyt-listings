@@ -32,6 +32,16 @@ class Box(BaseModel):
             'links': links
         })
 
+    def update(self, payload: dict) -> None:
+        if 'left' in payload:
+            self.left = payload['left']
+        if 'top' in payload:
+            self.top = payload['top']
+        if 'width' in payload:
+            self.width = payload['width']
+        if 'height' in payload:
+            self.height = payload['height']
+
     @staticmethod
     def get_item_id_to_box_list(boxes: list[DBBox], box_id_to_links: dict[int, list[Link]]) -> dict[int, list[Box]]:
         item_id_to_box_list: dict[int, list[Box]] = {}
