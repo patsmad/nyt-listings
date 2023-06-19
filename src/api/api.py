@@ -4,6 +4,7 @@ from src.model.annotated_file import AnnotatedFile
 from src.model.file import File
 from src.model.link_file import LinkFiles
 from src.model.link import Link
+from src.model.box import Box
 from typing import Optional
 
 class API:
@@ -33,3 +34,8 @@ class API:
 
     def delete_item(self, payload: dict) -> Optional[int]:
         return self.updater.delete_item(payload)
+
+    def update_box(self, payload: dict) -> Optional[int]:
+        box: Optional[Box] = self.fetcher.fetch_box(payload['id'])
+        if box is not None:
+            return self.updater.update_box(box, payload)

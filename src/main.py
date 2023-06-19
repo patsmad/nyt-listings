@@ -89,6 +89,16 @@ def item_delete() -> dict:
     else:
         raise Exception('Item id <{}> not found'.format(payload.get('id')))
 
+@app.route('/box/update/', methods=['POST'])
+@config.api_check
+def box_update() -> dict:
+    payload: dict = json.loads(request.data)
+    updated_id: Optional[int] = api.update_box(payload)
+    if updated_id is not None:
+        return {'id': updated_id}
+    else:
+        raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
 @click.group()
 def cli():
     pass

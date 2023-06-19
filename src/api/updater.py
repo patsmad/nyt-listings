@@ -1,4 +1,5 @@
 from src.db.db import DB
+from src.model.box import Box
 from src.model.link import Link
 from src.db.model.link import InputLink
 from typing import Optional
@@ -19,3 +20,7 @@ class Updater:
         maybe_id = payload.get('id')
         if maybe_id is not None:
             return self.db.delete_item(maybe_id)
+
+    def update_box(self, box: Box, payload: dict) -> Optional[int]:
+        box.update(payload)
+        return self.db.update_box(box)
