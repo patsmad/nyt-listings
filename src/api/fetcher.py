@@ -32,9 +32,11 @@ class Fetcher:
     def get_link(self, link: str) -> LinkFiles:
         link_info: Optional[LinkInfo] = LinkInfo.from_db(self.db.get_link_info(link))
         links: list[Link] = [Link.from_db(l, link_info) for l in self.db.fetch_all_links_for_link(link)]
+        link_map: dict[int, Link] = {l.id: l for l in links}
+        link_id_to_boxes: dict[int, Box] = {link_id: Box.from_db(box, [link_map[link_id]]) for link_id, box in self.db.fetch_link_id_to_boxes(link).items()}
+        link_id_to_items: dict[int, Item] = {link_id: Item.from_db(item, [link_id_to_boxes[link_id]]) for link_id, item in self.db.fetch_link_id_to_items(link).items()}
         link_id_to_files: dict[int, File] = {link_id: File.from_db(file) for link_id, file in self.db.fetch_link_id_to_files(link).items()}
-        link_id_to_boxes: dict[int, Box] = {link_id: Box.from_db(box, []) for link_id, box in self.db.fetch_link_id_to_boxes(link).items()}
-        link_files: list[LinkFile] = [LinkFile.build(l, link_id_to_files, link_id_to_boxes) for l in links]
+        link_files: list[LinkFile] = [LinkFile.build(link, link_id_to_files, link_id_to_boxes, link_id_to_items) for link in links]
         return LinkFiles.build(link, link_info, link_files)
 
     def fetch_link(self, link_id: int) -> Optional[Link]:

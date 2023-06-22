@@ -2,6 +2,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 from .box import Box
 from .file import File
+from .item import Item
 from .link import Link
 from .link_info import LinkInfo
 from typing import Optional
@@ -9,6 +10,9 @@ from typing import Optional
 class LinkFile(BaseModel):
     file_id: int
     file: str
+    item_id: int
+    x: int
+    y: int
     box_id: int
     left: int
     top: int
@@ -21,6 +25,9 @@ class LinkFile(BaseModel):
         return {
             'file_id': self.file_id,
             'file': self.file,
+            'item_id': self.item_id,
+            'x': self.x,
+            'y': self.y,
             'box_id': self.box_id,
             'left': self.left,
             'top': self.top,
@@ -31,12 +38,16 @@ class LinkFile(BaseModel):
         }
 
     @staticmethod
-    def build(link: Link, link_id_to_file: dict[int, File], link_id_to_box: dict[int, Box]) -> LinkFile:
+    def build(link: Link, link_id_to_file: dict[int, File], link_id_to_box: dict[int, Box], link_id_to_item: dict[int, Item]) -> LinkFile:
         file = link_id_to_file[link.id]
         box = link_id_to_box[link.id]
+        item = link_id_to_item[link.id]
         return LinkFile(**{
             'file_id': file.id,
             'file': file.name,
+            'item_id': item.id,
+            'x': item.x,
+            'y': item.y,
             'box_id': box.id,
             'left': box.left,
             'top': box.top,
