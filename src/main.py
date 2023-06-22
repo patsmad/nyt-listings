@@ -79,6 +79,13 @@ def link_add() -> dict:
     id: int = api.add_link(payload)
     return {'id': id}
 
+@app.route('/item/add/', methods=['POST'])
+@config.api_check
+def item_add() -> dict:
+    payload: dict = json.loads(request.data)
+    id: int = api.add_item(payload)
+    return {'id': id}
+
 @app.route('/item/delete/', methods=['POST'])
 @config.api_check
 def item_delete() -> dict:
@@ -98,6 +105,13 @@ def box_update() -> dict:
         return {'id': updated_id}
     else:
         raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
+@app.route('/box/add/', methods=['POST'])
+@config.api_check
+def box_add() -> dict:
+    payload: dict = json.loads(request.data)
+    id: int = api.add_box(payload)
+    return {'id': id}
 
 @click.group()
 def cli():

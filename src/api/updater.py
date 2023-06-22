@@ -2,6 +2,8 @@ from src.db.db import DB
 from src.model.box import Box
 from src.model.link import Link
 from src.db.model.link import InputLink
+from src.db.model.item import InputItem
+from src.db.model.box import InputBox
 from typing import Optional
 
 class Updater:
@@ -16,10 +18,18 @@ class Updater:
         link: InputLink = InputLink(**payload)
         return self.db.insert_link(link)
 
+    def add_item(self, payload: dict) -> int:
+        item: InputItem = InputItem(**payload)
+        return self.db.insert_item(item)
+
     def delete_item(self, payload: dict) -> Optional[int]:
         maybe_id = payload.get('id')
         if maybe_id is not None:
             return self.db.delete_item(maybe_id)
+
+    def add_box(self, payload: dict) -> Optional[int]:
+        box: InputBox = InputBox(**payload)
+        return self.db.insert_box(box)
 
     def update_box(self, box: Box, payload: dict) -> Optional[int]:
         box.update(payload)

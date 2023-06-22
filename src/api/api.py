@@ -32,6 +32,9 @@ class API:
     def add_link(self, payload: dict) -> int:
         return self.updater.add_link(payload)
 
+    def add_item(self, payload: dict) -> int:
+        return self.updater.add_item(payload)
+
     def delete_item(self, payload: dict) -> Optional[int]:
         return self.updater.delete_item(payload)
 
@@ -39,3 +42,6 @@ class API:
         box: Optional[Box] = self.fetcher.fetch_box(payload['id'])
         if box is not None:
             return self.updater.update_box(box, payload)
+
+    def add_box(self, payload: dict) -> Optional[int]:
+        return self.updater.add_box(payload)
