@@ -5,6 +5,7 @@ from db.io import DBIO
 from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
+import re
 from util.config import Config
 from util.util_io import data_path, pathExists
 from util.image import open_image, crop_image, image_to_buf
@@ -105,6 +106,19 @@ def box_update() -> dict:
         return {'id': updated_id}
     else:
         raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
+@app.route('/poster/', methods=['GET'])
+@config.api_check
+def poster() -> Response:
+    maybe_link: Optional[str] = request.args.get('link')
+    if maybe_link is not None:
+        key: list = re.findall('https://www.imdb.com/title/(.*)/', maybe_link)
+        if len(key) > 0 and pathExists(f'data/posters/{key[0]}.jpg'):
+            return send_from_directory(f'{data_path}/data/posters', f'{key[0]}.jpg')
+        else:
+            raise Exception('Invalid poster request')
+    else:
+        raise Exception('Must provide ?link=<link> for poster request')
 
 @click.group()
 def cli():
