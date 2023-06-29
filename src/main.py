@@ -106,13 +106,6 @@ def box_update() -> dict:
     else:
         raise Exception('Box id <{}> not found'.format(payload.get('id')))
 
-@app.route('/box/add/', methods=['POST'])
-@config.api_check
-def box_add() -> dict:
-    payload: dict = json.loads(request.data)
-    id: int = api.add_box(payload)
-    return {'id': id}
-
 @click.group()
 def cli():
     pass

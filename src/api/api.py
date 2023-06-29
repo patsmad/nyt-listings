@@ -42,6 +42,3 @@ class API:
         box: Optional[Box] = self.fetcher.fetch_box(payload['id'])
         if box is not None:
             return self.updater.update_box(box, payload)
-
-    def add_box(self, payload: dict) -> Optional[int]:
-        return self.updater.add_box(payload)

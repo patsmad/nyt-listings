@@ -20,16 +20,21 @@ class Updater:
 
     def add_item(self, payload: dict) -> int:
         item: InputItem = InputItem(**payload)
-        return self.db.insert_item(item)
+        item_id = self.db.insert_item(item)
+        box: InputBox = InputBox(**{
+            'item_id': item_id,
+            'left': item.x - 100,
+            'top': item.y - 100,
+            'width': 200,
+            'height': 200
+        })
+        self.db.insert_box(box)
+        return item_id
 
     def delete_item(self, payload: dict) -> Optional[int]:
         maybe_id = payload.get('id')
         if maybe_id is not None:
             return self.db.delete_item(maybe_id)
-
-    def add_box(self, payload: dict) -> Optional[int]:
-        box: InputBox = InputBox(**payload)
-        return self.db.insert_box(box)
 
     def update_box(self, box: Box, payload: dict) -> Optional[int]:
         box.update(payload)
