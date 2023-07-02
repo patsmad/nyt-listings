@@ -18,6 +18,7 @@ class DB:
                 sa.text('SELECT '
                         'file.id, '
                         'file.name, '
+                        'file.file_date, '
                         'file.created_at, '
                         'file.updated_at FROM files file')
             ).fetchall()
@@ -29,6 +30,7 @@ class DB:
                 sa.text('SELECT '
                         'file.id, '
                         'file.name, '
+                        'file.file_date, '
                         'file.created_at, '
                         'file.updated_at FROM files file WHERE file.id = :id'),
                 {'id': id}
@@ -38,7 +40,7 @@ class DB:
     def insert_file(self, file: InputFile) -> int:
         with self.engine.connect() as con:
             id = con.execute(
-                sa.text('INSERT INTO files (name) VALUES(:name) RETURNING files.id'),
+                sa.text('INSERT INTO files (name, file_date) VALUES(:name, :file_date) RETURNING files.id'),
                 file.dict()
             ).first()[0]
             con.commit()
@@ -60,6 +62,7 @@ class DB:
                         'link.id as link_id, '
                         'file.id, '
                         'file.name, '
+                        'file.file_date, '
                         'file.created_at, '
                         'file.updated_at FROM links link '
                         'JOIN boxes box ON link.box_id = box.id '

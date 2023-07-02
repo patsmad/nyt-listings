@@ -140,6 +140,10 @@ def fill_missing_posters():
     poster_fetcher.fill_missing_posters()
 
 @click.command()
+def custom_runner():
+    db_io.custom_runner()
+
+@click.command()
 def server():
     app.run(debug=True)
 
@@ -147,6 +151,7 @@ cli.add_command(server)
 cli.add_command(from_file_to_db)
 cli.add_command(update_imdb_data)
 cli.add_command(fill_missing_posters)
+cli.add_command(custom_runner)
 
 if __name__ == '__main__':
     cli()

@@ -23,7 +23,7 @@ class DBIO:
     def from_file_to_db(self, fname) -> None:
         files_to_add: dict = readJSON(fname)
         for file in files_to_add:
-            file_id: int = self.db.insert_file(InputFile(**{'name': file['name']}))
+            file_id: int = self.db.insert_file(InputFile(**{'name': file['name'], 'date': None}))
             count = 0
             with self.db.engine.connect() as con:
                 for item in file['items']:
@@ -63,3 +63,7 @@ class DBIO:
                     print(self.db._insert_or_update_link_info(con, InputLinkInfo(**full_dict[link])))
             con.commit()
         rmdir('data/tmp')
+
+    # Default: pass. To be used to run custom commands against the DB (like filling in new columns)
+    def custom_runner(self):
+        pass
