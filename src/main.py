@@ -1,7 +1,8 @@
 from api.api import API
-from builder import api_builder, db_io_builder
+from builder import api_builder, db_io_builder, poster_fetcher_builder
 import click
 from db.io import DBIO
+from analysis.posters import PosterFetcher
 from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
@@ -17,6 +18,7 @@ CORS(app)
 
 api: API = api_builder.build()
 db_io: DBIO = db_io_builder.build()
+poster_fetcher: PosterFetcher = poster_fetcher_builder.build()
 
 
 # TODO: Exceptions should be HTTP errors with a BMT themed splash page
@@ -116,7 +118,7 @@ def poster() -> Response:
         if len(key) > 0 and pathExists(f'data/posters/{key[0]}.jpg'):
             return send_from_directory(f'{data_path}/data/posters', f'{key[0]}.jpg')
         else:
-            raise Exception('Invalid poster request')
+            return send_from_directory(f'{data_path}/data/posters', 'no_poster.jpg')
     else:
         raise Exception('Must provide ?link=<link> for poster request')
 
@@ -134,12 +136,17 @@ def update_imdb_data():
     db_io.update_imdb_data()
 
 @click.command()
+def fill_missing_posters():
+    poster_fetcher.fill_missing_posters()
+
+@click.command()
 def server():
     app.run(debug=True)
 
 cli.add_command(server)
 cli.add_command(from_file_to_db)
 cli.add_command(update_imdb_data)
+cli.add_command(fill_missing_posters)
 
 if __name__ == '__main__':
     cli()

@@ -7,6 +7,7 @@ class Config:
     def __init__(self) -> None:
         config: dict = readJSON('config')
         self.api_key: str = config['api-key']
+        self.headers: dict = config['headers']
 
     def api_key_match(self, api_key: str) -> bool:
         return api_key == self.api_key

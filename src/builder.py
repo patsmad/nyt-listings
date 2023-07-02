@@ -3,6 +3,7 @@ from api.fetcher import Fetcher
 from api.updater import Updater
 from db.db import DB
 from db.io import DBIO
+from analysis.posters import PosterFetcher
 import sqlalchemy as sa
 from typing import TypeVar, Generic, Callable, Optional
 
@@ -60,9 +61,17 @@ class DBIOBuilder(Builder[DBIO]):
     def get_api(self) -> DBIO:
         return DBIO(db_builder.build())
 
+class PosterFetcherBuilder(Builder[PosterFetcher]):
+    def __init__(self) -> None:
+        super().__init__(self.get_api)
+
+    def get_api(self) -> PosterFetcher:
+        return PosterFetcher(db_builder.build())
+
 engine_builder: EngineBuilder = EngineBuilder()
 db_builder: DBBuilder = DBBuilder()
 fetcher_builder: FetcherBuilder = FetcherBuilder()
 updater_builder: UpdaterBuilder = UpdaterBuilder()
 api_builder: APIBuilder = APIBuilder()
 db_io_builder: DBIOBuilder = DBIOBuilder()
+poster_fetcher_builder: PosterFetcherBuilder = PosterFetcherBuilder()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pydantic import BaseModel
 from src.db.model.link_info import LinkInfo as DBLinkInfo
+from typing import Optional
 
 class LinkInfo(BaseModel):
     id: int
@@ -21,15 +22,16 @@ class LinkInfo(BaseModel):
         }
 
     @staticmethod
-    def from_db(link_info: DBLinkInfo) -> LinkInfo:
-        return LinkInfo(**{
-            'id': link_info.id,
-            'link': link_info.link,
-            'title': link_info.title,
-            'rating': link_info.rating,
-            'votes': link_info.votes,
-            'year': link_info.year
-        })
+    def from_db(link_info: Optional[DBLinkInfo]) -> Optional[LinkInfo]:
+        if link_info is not None:
+            return LinkInfo(**{
+                'id': link_info.id,
+                'link': link_info.link,
+                'title': link_info.title,
+                'rating': link_info.rating,
+                'votes': link_info.votes,
+                'year': link_info.year
+            })
 
     @staticmethod
     def get_link_to_link_info(links_info: list[DBLinkInfo]) -> dict[str, LinkInfo]:
