@@ -132,8 +132,8 @@ class DB:
 
     def _insert_box(self, con: sa.Connection, box: InputBox) -> int:
         return con.execute(
-            sa.text('INSERT INTO boxes (item_id, left, top, width, height) '
-                    'VALUES(:item_id, :left, :top, :width, :height) RETURNING boxes.id'),
+            sa.text('INSERT INTO boxes (item_id, left, top, width, height, channel, time, duration, vcr_code) '
+                    'VALUES(:item_id, :left, :top, :width, :height, :channel, :time, :duration, :vcr_code) RETURNING boxes.id'),
             box.dict()
         ).first()[0]
 
@@ -157,9 +157,15 @@ class DB:
                         'top = :top, '
                         'width = :width, '
                         'height = :height, '
+                        'channel = :channel, '
+                        'time = :time, '
+                        'duration_minutes = :duration_minutes, '
+                        'vcr_code = :vcr_code, '
                         'updated_at = CURRENT_TIMESTAMP '
                         'WHERE id = :id RETURNING id'),
-                {'id': box.id, 'left': box.left, 'top': box.top, 'width': box.width, 'height': box.height}
+                {'id': box.id, 'left': box.left, 'top': box.top, 'width': box.width, 'height': box.height,
+                 'channel': box.channel, 'time': box.formatted_time(),
+                 'duration_minutes': box.duration_minutes, 'vcr_code': box.vcr_code}
             ).first()
             con.commit()
         return maybeId[0] if maybeId is not None else None
@@ -183,6 +189,10 @@ class DB:
                         'box.top, '
                         'box.width, '
                         'box.height, '
+                        'box.channel, '
+                        'box.time, '
+                        'box.duration_minutes, '
+                        'box.vcr_code, '
                         'box.created_at, '
                         'box.updated_at FROM boxes box '
                         'JOIN items item ON box.item_id = item.id '
@@ -202,6 +212,10 @@ class DB:
                         'box.top, '
                         'box.width, '
                         'box.height, '
+                        'box.channel, '
+                        'box.time, '
+                        'box.duration_minutes, '
+                        'box.vcr_code, '
                         'box.created_at, '
                         'box.updated_at FROM links link '
                         'JOIN boxes box ON link.box_id = box.id '
@@ -219,6 +233,10 @@ class DB:
                         'box.top, '
                         'box.width, '
                         'box.height, '
+                        'box.channel, '
+                        'box.time, '
+                        'box.duration_minutes, '
+                        'box.vcr_code, '
                         'box.created_at, '
                         'box.updated_at FROM boxes box '
                         'WHERE box.id = :id'), {'id': box_id}

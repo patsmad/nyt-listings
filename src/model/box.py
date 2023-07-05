@@ -2,6 +2,8 @@ from __future__ import annotations
 from pydantic import BaseModel
 from src.db.model.box import Box as DBBox
 from .link import Link
+from typing import Optional
+from datetime import datetime
 
 class Box(BaseModel):
     id: int
@@ -9,6 +11,10 @@ class Box(BaseModel):
     top: int
     width: int
     height: int
+    channel: Optional[str]
+    time: Optional[datetime]
+    duration_minutes: Optional[int]
+    vcr_code: Optional[int]
     links: list[Link]
 
     def to_dict(self) -> dict:
@@ -18,6 +24,10 @@ class Box(BaseModel):
             'top': self.top,
             'width': self.width,
             'height': self.height,
+            'channel': self.channel,
+            'time': self.time,
+            'duration_minutes': self.duration_minutes,
+            'vcr_code': self.vcr_code,
             'links': [link.to_dict() for link in self.links]
         }
 
@@ -29,6 +39,10 @@ class Box(BaseModel):
             'top': box.top,
             'width': box.width,
             'height': box.height,
+            'channel': box.channel,
+            'time': box.time,
+            'duration_minutes': box.duration_minutes,
+            'vcr_code': box.vcr_code,
             'links': links
         })
 
@@ -41,6 +55,8 @@ class Box(BaseModel):
             self.width = payload['width']
         if 'height' in payload:
             self.height = payload['height']
+        # TODO: If channel, year, month, day, hour, minute, duration all set -> calculate vcr_code
+        # TODO: If year, month, day, vcr_code all set -> calculate hour, minute, duration, channel
 
     @staticmethod
     def get_item_id_to_box_list(boxes: list[DBBox], box_id_to_links: dict[int, list[Link]]) -> dict[int, list[Box]]:
@@ -50,3 +66,7 @@ class Box(BaseModel):
                 item_id_to_box_list[box.item_id] = []
             item_id_to_box_list[box.item_id].append(Box.from_db(box, box_id_to_links.get(box.id, [])))
         return item_id_to_box_list
+
+    def formatted_time(self):
+        if self.time is not None:
+            return self.time.strftime('%Y-%m-%d %H:%M:00')
