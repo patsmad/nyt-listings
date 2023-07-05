@@ -132,8 +132,8 @@ class DB:
 
     def _insert_box(self, con: sa.Connection, box: InputBox) -> int:
         return con.execute(
-            sa.text('INSERT INTO boxes (item_id, left, top, width, height, channel, time, duration, vcr_code) '
-                    'VALUES(:item_id, :left, :top, :width, :height, :channel, :time, :duration, :vcr_code) RETURNING boxes.id'),
+            sa.text('INSERT INTO boxes (item_id, left, top, width, height, channel, time, duration_minutes, vcr_code) '
+                    'VALUES(:item_id, :left, :top, :width, :height, :channel, :time, :duration_minutes, :vcr_code) RETURNING boxes.id'),
             box.dict()
         ).first()[0]
 
