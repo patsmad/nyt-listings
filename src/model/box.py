@@ -4,6 +4,7 @@ from src.db.model.box import Box as DBBox
 from .link import Link
 from typing import Optional
 from datetime import datetime
+from src.analysis.vcr_code import VCRCodeCalculator
 
 class Box(BaseModel):
     id: int
@@ -55,8 +56,14 @@ class Box(BaseModel):
             self.width = payload['width']
         if 'height' in payload:
             self.height = payload['height']
+        if 'vcr_code' in payload and 'year' in payload and 'month' in payload and 'day' in payload:
+            channel_info = VCRCodeCalculator.from_vcr_code(int(payload['year']), int(payload['month']), int(payload['day']), int(payload['vcr_code']), 0)
+            if channel_info is not None:
+                self.time = channel_info.time
+                self.channel = channel_info.channel
+                self.duration_minutes = channel_info.duration_minutes
+                self.vcr_code = int(payload['vcr_code'])
         # TODO: If channel, year, month, day, hour, minute, duration all set -> calculate vcr_code
-        # TODO: If year, month, day, vcr_code all set -> calculate hour, minute, duration, channel
 
     @staticmethod
     def get_item_id_to_box_list(boxes: list[DBBox], box_id_to_links: dict[int, list[Link]]) -> dict[int, list[Box]]:

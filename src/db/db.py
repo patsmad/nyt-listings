@@ -37,6 +37,19 @@ class DB:
             ).fetchone()
         return File(**result._asdict()) if result is not None else None
 
+    def fetch_file_by_name(self, name: str) -> Optional[File]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'file.id, '
+                        'file.name, '
+                        'file.file_date, '
+                        'file.created_at, '
+                        'file.updated_at FROM files file WHERE file.name = :name'),
+                {'name': name}
+            ).fetchone()
+        return File(**result._asdict()) if result is not None else None
+
     def insert_file(self, file: InputFile) -> int:
         with self.engine.connect() as con:
             id = con.execute(

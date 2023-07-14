@@ -8,6 +8,7 @@ class Config:
         config: dict = readJSON('config')
         self.api_key: str = config['api-key']
         self.headers: dict = config['headers']
+        self.path_to_tesseract = config['path_to_tesseract']
 
     def api_key_match(self, api_key: str) -> bool:
         return api_key == self.api_key

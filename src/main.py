@@ -109,6 +109,16 @@ def box_update() -> dict:
     else:
         raise Exception('Box id <{}> not found'.format(payload.get('id')))
 
+@app.route('/vcr_code/update/', methods=['POST'])
+@config.api_check
+def vcr_code_update() -> dict:
+    payload: dict = json.loads(request.data)
+    updated_id: Optional[int] = api.update_box(payload)
+    if updated_id is not None:
+        return {'id': updated_id}
+    else:
+        raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
 @app.route('/poster/', methods=['GET'])
 @config.api_check
 def poster() -> Response:
@@ -144,6 +154,16 @@ def custom_runner():
     db_io.custom_runner()
 
 @click.command()
+@click.argument('link')
+def fill_vcr_links(link):
+    db_io.fill_vcr_link(link)
+
+@click.command()
+@click.argument('files')
+def fill_vcr_files(files):
+    db_io.fill_vcr_files(files)
+
+@click.command()
 def server():
     app.run(debug=True)
 
@@ -152,6 +172,8 @@ cli.add_command(from_file_to_db)
 cli.add_command(update_imdb_data)
 cli.add_command(fill_missing_posters)
 cli.add_command(custom_runner)
+cli.add_command(fill_vcr_links)
+cli.add_command(fill_vcr_files)
 
 if __name__ == '__main__':
     cli()

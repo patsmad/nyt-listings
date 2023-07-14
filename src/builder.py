@@ -59,7 +59,7 @@ class DBIOBuilder(Builder[DBIO]):
         super().__init__(self.get_api)
 
     def get_api(self) -> DBIO:
-        return DBIO(db_builder.build())
+        return DBIO(db_builder.build(), api_builder.build())
 
 class PosterFetcherBuilder(Builder[PosterFetcher]):
     def __init__(self) -> None:
