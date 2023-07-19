@@ -74,29 +74,30 @@ class DBIO:
             con.commit()
         rmdir('data/tmp')
 
-    def fill_vcr_link(self, link):
-        vcr_code_pattern: re.Pattern = re.compile('[^0-9]+([0-9]{5,})[^0-9]*')
-        links = self.db.fetch_all_links_for_link(link)
-        link_to_boxes = self.db.fetch_link_id_to_boxes(link)
-        link_to_files = self.db.fetch_link_id_to_files(link)
-        for link in links:
-            box = link_to_boxes[link.id]
-            file = link_to_files[link.id]
-            if box.vcr_code is None:
-                img = open_image(f'{data_path}/data/files/{file.name}')
-                cropped_image = crop_image(img, box.left, box.top, box.width, box.height)
-                text = get_text(cropped_image)
-                vcr_codes = re.findall(vcr_code_pattern, text)
-                if len(vcr_codes) > 0:
-                    vcr_code = vcr_codes[0]
-                    year, month, day = file.file_date.year, file.file_date.month, file.file_date.day
-                    payload = {'id': box.id, 'year': year, 'month': month, 'day': day, 'vcr_code': vcr_code}
-                    id = self.api.update_box(payload)
-                    print(id, payload)
+    def fill_vcr_links(self, links):
+        for link in links.split(','):
+            vcr_code_pattern: re.Pattern = re.compile('[^0-9]+([0-9]{5,})[^0-9]*')
+            link_links = self.db.fetch_all_links_for_link(link)
+            link_to_boxes = self.db.fetch_link_id_to_boxes(link)
+            link_to_files = self.db.fetch_link_id_to_files(link)
+            for link_link in link_links:
+                box = link_to_boxes[link_link.id]
+                file = link_to_files[link_link.id]
+                if box.vcr_code is None:
+                    img = open_image(f'{data_path}/data/files/{file.name}')
+                    cropped_image = crop_image(img, box.left, box.top, box.width, box.height)
+                    text = get_text(cropped_image)
+                    vcr_codes = re.findall(vcr_code_pattern, text)
+                    if len(vcr_codes) > 0:
+                        vcr_code = vcr_codes[0]
+                        year, month, day = file.file_date.year, file.file_date.month, file.file_date.day
+                        payload = {'id': box.id, 'year': year, 'month': month, 'day': day, 'vcr_code': vcr_code}
+                        id = self.api.update_box(payload)
+                        print(id, payload)
+                    else:
+                        print('No VCR Code found')
                 else:
-                    print('No VCR Code found')
-            else:
-                print('VCR Code already found')
+                    print('VCR Code already found')
 
     def fill_vcr_files(self, files):
         for file in glob.glob(f'{data_path}/data/files/{files}'):

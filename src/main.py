@@ -154,9 +154,9 @@ def custom_runner():
     db_io.custom_runner()
 
 @click.command()
-@click.argument('link')
-def fill_vcr_links(link):
-    db_io.fill_vcr_link(link)
+@click.argument('links')
+def fill_vcr_links(links):
+    db_io.fill_vcr_links(links)
 
 @click.command()
 @click.argument('files')

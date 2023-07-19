@@ -20,6 +20,9 @@ class LetterboxdBox:
     def __hash__(self):
         return hash(self.link) + hash(self.channel) + hash(self.time) + hash(self.duration_minutes)
 
+    def str_date(self):
+        return self.time.strftime('%Y-%m-%d')
+
     def str_time(self):
         return self.time.strftime('%Y-%m-%d %I:%M %p')
 
@@ -53,3 +56,38 @@ class Letterboxd:
             for i, box in enumerate(sorted_boxes):
                 print(box.str_time_channel())
                 f.write(f"{str(i)},{box.link.split('/title/')[1].split('/')[0]},{box.str_time_channel()}\n")
+
+    def channel_films(self, name: str, channel: str, start_time: datetime, end_time: datetime, time_delta: timedelta) -> None:
+        boxes = []
+        time = start_time
+        while time <= end_time:
+            print(time)
+            for box in self.db.fetch_channel_time_box(channel, time):
+                links = self.db.fetch_box_links(box.id)
+                for link in links:
+                    boxes.append(LetterboxdBox(link, box))
+            time += time_delta
+        unique_boxes = set(boxes)
+        print(len(unique_boxes))
+        sorted_boxes = sorted(unique_boxes, key=lambda b: b.time)
+        link_to_boxes = {}
+        for box in sorted_boxes:
+            if box.link not in link_to_boxes:
+                link_to_boxes[box.link] = []
+            link_to_boxes[box.link].append(box)
+        sorted_links = sorted(link_to_boxes, key=lambda x: link_to_boxes[x][0].time)
+        with open(f'../../data/letterboxd/{name}.csv', 'w') as f:
+            f.write('Position,Const,Review\n')
+            for i, link in enumerate(sorted_links):
+                all_times = '; '.join([box.str_date() for box in link_to_boxes[link]])
+                print(link, all_times)
+                f.write(f"{str(i)},{link.split('/title/')[1].split('/')[0]},{all_times}\n")
+
+# import sqlalchemy as sa
+# engine = sa.create_engine('sqlite:///../../data/NYTListings.db')
+# db = DB(engine)
+# l = Letterboxd(db)
+# start_time = datetime(1996, 1, 1, 20, 0, 0)
+# end_time = datetime(1997, 1, 1, 0, 0, 0)
+# l.channel_films('SHO_1996_8PM', 'SHO', start_time, end_time, timedelta(days = 1))
+

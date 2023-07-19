@@ -7,6 +7,7 @@ from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
 import sqlalchemy as sa
 from typing import Optional
+from datetime import datetime
 
 class DB:
     def __init__(self, engine: sa.Engine) -> None:
@@ -255,6 +256,28 @@ class DB:
                         'WHERE box.id = :id'), {'id': box_id}
             ).fetchone()
         return Box(**result._asdict()) if result is not None else None
+
+    def fetch_channel_time_box(self, channel: str, time: datetime) -> list[Box]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id, '
+                        'box.item_id, '
+                        'box.left, '
+                        'box.top, '
+                        'box.width, '
+                        'box.height, '
+                        'box.channel, '
+                        'box.time, '
+                        'box.duration_minutes, '
+                        'box.vcr_code, '
+                        'box.created_at, '
+                        'box.updated_at FROM boxes box '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE box.channel = :channel AND box.time = :time'), {'channel': channel, 'time': time}
+            )
+        return [Box(**box._asdict()) for box in result.fetchall()]
 
     def _insert_link(self, con: sa.Connection, link: InputLink) -> int:
         return con.execute(
