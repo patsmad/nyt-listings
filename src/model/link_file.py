@@ -26,6 +26,7 @@ class LinkFile(BaseModel):
     vcr_code: Optional[int]
     link_id: int
     confirmed: bool
+    notes: list[str]
 
     def to_dict(self) -> dict:
         return {
@@ -45,14 +46,22 @@ class LinkFile(BaseModel):
             'duration_minutes': self.duration_minutes,
             'vcr_code': self.vcr_code,
             'link_id': self.link_id,
-            'confirmed': self.confirmed
+            'confirmed': self.confirmed,
+            'notes': self.notes
         }
 
     @staticmethod
-    def build(link: Link, link_id_to_file: dict[int, File], link_id_to_box: dict[int, Box], link_id_to_item: dict[int, Item]) -> LinkFile:
+    def build(
+        link: Link,
+        link_id_to_file: dict[int, File],
+        link_id_to_box: dict[int, Box],
+        link_id_to_item: dict[int, Item],
+        link_id_to_notes: dict[int, list[Note]]
+    ) -> LinkFile:
         file = link_id_to_file[link.id]
         box = link_id_to_box[link.id]
         item = link_id_to_item[link.id]
+        notes = link_id_to_notes[link.id]
         return LinkFile(**{
             'file_id': file.id,
             'file': file.name,
@@ -70,7 +79,8 @@ class LinkFile(BaseModel):
             'duration_minutes': box.duration_minutes,
             'vcr_code': box.vcr_code,
             'link_id': link.id,
-            'confirmed': link.confirmed
+            'confirmed': link.confirmed,
+            'notes': notes
         })
 
 class LinkFiles(BaseModel):

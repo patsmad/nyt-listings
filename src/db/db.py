@@ -1,8 +1,10 @@
 from .model.item import Item, InputItem
 from .model.box import Box, InputBox
 from .model.link import Link, InputLink
+from .model.note import Note, InputNote
 from src.model.link import Link as ModelLink
 from src.model.box import Box as ModelBox
+from src.model.note import Note as ModelNote
 from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
 import sqlalchemy as sa
@@ -459,3 +461,96 @@ class DB:
             ).fetchone()
         if result is not None:
             return LinkInfo(**result._asdict())
+
+    def insert_note(self, note: InputNote) -> int:
+        with self.engine.connect() as con:
+            id = con.execute(
+                sa.text('INSERT INTO links (box_id, link, confirmed) '
+                        'VALUES(:box_id, :link, :confirmed) RETURNING links.id'),
+                link.dict()
+            ).first()[0]
+            con.commit()
+        return id
+
+    def delete_note(self, id: int) -> Optional[int]:
+        with self.engine.connect() as con:
+            con.execute(sa.text('PRAGMA foreign_keys = ON'))
+            maybeId = con.execute(
+                sa.text('DELETE FROM notes WHERE id = :id RETURNING id'), {'id': id}
+            ).first()
+            con.commit()
+        return maybeId[0] if maybeId is not None else None
+
+    def update_note(self, note: ModelNote) -> Optional[int]:
+        with self.engine.connect() as con:
+            maybeId = con.execute(
+                sa.text('UPDATE notes '
+                        'SET note = :note, '
+                        'updated_at = CURRENT_TIMESTAMP '
+                        'WHERE id = :id RETURNING id'),
+                {'id': note.id, 'note': note.note}
+            ).first()
+            con.commit()
+        return maybeId[0] if maybeId is not None else None
+
+    def fetch_file_notes(self, file_id: int) -> list[Link]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'note.id, '
+                        'note.box_id, '
+                        'note.note, '
+                        'link.created_at, '
+                        'link.updated_at FROM notes note '
+                        'JOIN boxes box ON link.box_id = box.id '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE file.id = :file_id'), {'file_id': file_id}
+            )
+        return [Note(**note._asdict()) for note in result.fetchall()]
+
+    def fetch_note(self, note_id: int) -> Optional[Note]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'note.id, '
+                        'note.box_id, '
+                        'note.note, '
+                        'note.created_at, '
+                        'note.updated_at FROM notes note '
+                        'WHERE note.id = :id'), {'id': note_id}
+            ).fetchone()
+        return Note(**result._asdict()) if result is not None else None
+
+    def fetch_box_notes(self, box_id: int) -> list[Note]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'note.id, '
+                        'note.box_id, '
+                        'note.note, '
+                        'note.created_at, '
+                        'note.updated_at FROM notes note '
+                        'WHERE note.box_id = :box_id'), {'box_id': box_id}
+            )
+        return [Note(**n._asdict()) for n in result.fetchall()]
+
+    def fetch_all_notes_for_note(self, ntoe: str) -> list[Note]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'note.id, '
+                        'note.box_id, '
+                        'note.link, '
+                        'note.created_at, '
+                        'note.updated_at FROM notes note '
+                        'WHERE note.note = :note'), {'note': note}
+            )
+        return [Link(**l._asdict()) for l in result.fetchall()]
+
+    def fetch_distinct_notes(self):
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT DISTINCT note FROM notes')
+            ).fetchall()
+        return [note[0] for note in result]

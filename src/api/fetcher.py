@@ -1,11 +1,13 @@
 from src.db.db import DB
 from src.db.model.link import Link as DBLink
 from src.db.model.box import Box as DBBox
+from src.db.model.note import Note as DBNote
 from src.model.annotated_file import AnnotatedFile
 from src.model.file import File
 from src.model.item import Item
 from src.model.box import Box
 from src.model.link import Link
+from src.model.note import Note
 from src.model.link_file import LinkFile, LinkFiles
 from src.model.link_info import LinkInfo
 from typing import Optional
@@ -36,7 +38,8 @@ class Fetcher:
         link_id_to_boxes: dict[int, Box] = {link_id: Box.from_db(box, [link_map[link_id]]) for link_id, box in self.db.fetch_link_id_to_boxes(link).items()}
         link_id_to_items: dict[int, Item] = {link_id: Item.from_db(item, [link_id_to_boxes[link_id]]) for link_id, item in self.db.fetch_link_id_to_items(link).items()}
         link_id_to_files: dict[int, File] = {link_id: File.from_db(file) for link_id, file in self.db.fetch_link_id_to_files(link).items()}
-        link_files: list[LinkFile] = [LinkFile.build(link, link_id_to_files, link_id_to_boxes, link_id_to_items) for link in links]
+        link_id_to_notes: dict[int, list[Note]] = {link_id: [Note.from_db(note) for note in notes] for link_id, notes in self.db.fetch_link_id_to_notes(link).items()}
+        link_files: list[LinkFile] = [LinkFile.build(link, link_id_to_files, link_id_to_boxes, link_id_to_items, link_id_to_notes) for link in links]
         return LinkFiles.build(link, link_info, link_files)
 
     def fetch_link(self, link_id: int) -> Optional[Link]:
@@ -50,3 +53,8 @@ class Fetcher:
         if db_box is not None:
             links = [Link.from_db(link, self.db.get_link_info(link.link)) for link in self.db.fetch_box_links(db_box.id)]
             return Box.from_db(db_box, links)
+
+    def fetch_note(self, note_id: int) -> Optional[Note]:
+        db_note: Optional[DBNote] = self.db.fetch_note(note_id)
+        if db_note is not None:
+            return Note.from_db(db_note)
