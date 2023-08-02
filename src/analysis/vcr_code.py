@@ -10,6 +10,9 @@ class ChannelInfo:
         self.time: datetime = time
         self.duration_minutes: int = duration_minutes
 
+    def __str__(self):
+        return f'({self.channel} {self.time} {self.duration_minutes})'
+
 class VCRCodeCalculator:
     vcr_code_pattern: re.Pattern = re.compile(
         'Program: ([^,]*), channel ([^,\(]*)[^,]*, at ([^\s]*) ([^,]*), duration ([^:]*):([^\.]*).'
@@ -44,10 +47,12 @@ class VCRCodeCalculator:
         ('23', 'CNBC'),
         ('42', 'CNN'),
         ('26', 'COM'),
+        ('86', 'COURT'),
         ('28', 'C-SPAN'),
         ('29', 'CUNY'),
         ('53', 'DIS'),
         ('63', 'E!'),
+        ('92', 'ENC'),
         ('34', 'ESPN'),
         ('88', 'ESPN2'),
         ('47', 'FAM'),
@@ -56,19 +61,22 @@ class VCRCodeCalculator:
         ('33', 'HBO'),
         ('95', 'HBOPL'),
         ('87', 'HIST'),
+        ('40', 'IFC'),
         ('46', 'LIFE'),
         ('45', 'MAX'),
         ('19', 'MSG'),
         ('48', 'MTV'),
         ('38', 'NICK'),
-        ('16', 'ODY'),
+        ('81', 'ODY'),
         ('32', 'ROM'),
         ('59', 'SC/FSN'),
         ('89', 'SCI-FI'),
         ('41', 'SHO'),
         ('80', 'STARZ'),
+        ('122', 'SUN'),
         ('43', 'TBS'),
         ('37', 'DSC'),
+        ('76', 'TCM'),
         ('51', 'TLC'),
         ('58', 'TMC'),
         ('49', 'TNN'),
@@ -110,9 +118,12 @@ class VCRCodeCalculator:
         month: str = str(channel_info.time.month)
         day: str = str(channel_info.time.day)
         channel_number: str = VCRCodeCalculator.channel_to_number[channel_info.channel]
-        duration: str = str(channel_info.duration_minutes)
-        out: bin = subprocess.check_output([f'{data_path}/data/vcr_code.exe', '-e',
-                                       '-y', year, '-m', month, '-d', day,
-                                       '-c', channel_number, '-t', channel_info.time.strftime('%H%M'),
-                                       '-l', duration])
+        duration_hour: int = channel_info.duration_minutes // 60
+        duration_minute: int = channel_info.duration_minutes % 60
+        duration_str: str = f'{duration_hour}{duration_minute}' if duration_minute >= 10 else f'{duration_hour}0{duration_minute}'
+        cmd: list[str] = [f'{data_path}/data/vcr_code.exe', '-e',
+               '-y', year, '-m', month, '-d', day,
+               '-c', channel_number, '-t', channel_info.time.strftime('%H%M'),
+               '-l', duration_str]
+        out: bin = subprocess.check_output(cmd)
         return int(out)

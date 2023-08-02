@@ -119,6 +119,36 @@ def vcr_code_update() -> dict:
     else:
         raise Exception('Box id <{}> not found'.format(payload.get('id')))
 
+@app.route('/channel/update/', methods=['POST'])
+@config.api_check
+def channel_update() -> dict:
+    payload: dict = json.loads(request.data)
+    updated_id: Optional[int] = api.update_box(payload)
+    if updated_id is not None:
+        return {'id': updated_id}
+    else:
+        raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
+@app.route('/time/update/', methods=['POST'])
+@config.api_check
+def time_update() -> dict:
+    payload: dict = json.loads(request.data)
+    updated_id: Optional[int] = api.update_box(payload)
+    if updated_id is not None:
+        return {'id': updated_id}
+    else:
+        raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
+@app.route('/duration/update/', methods=['POST'])
+@config.api_check
+def duration_update() -> dict:
+    payload: dict = json.loads(request.data)
+    updated_id: Optional[int] = api.update_box(payload)
+    if updated_id is not None:
+        return {'id': updated_id}
+    else:
+        raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
 @app.route('/poster/', methods=['GET'])
 @config.api_check
 def poster() -> Response:
