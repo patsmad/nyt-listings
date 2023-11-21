@@ -45,6 +45,16 @@ def link() -> dict:
    else:
        raise Exception('Must provide ?link=<link> for link request')
 
+@app.route('/box/', methods=['GET'])
+@config.api_check
+def box() -> dict:
+   box_id: int = int(request.args.get('box_id'))
+   if box_id is not None:
+       maybe_box = api.get_box(box_id)
+       return maybe_box.to_dict() if maybe_box is not None else {}
+   else:
+       raise Exception('Must provide ?box_id=<box_id> for link request')
+
 @app.route('/img/', methods=['GET'])
 @config.api_check
 def img() -> Response:

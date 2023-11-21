@@ -24,6 +24,9 @@ class API:
     def get_link(self, link: str) -> LinkFiles:
         return self.fetcher.get_link(link)
 
+    def get_box(self, box_id: int) -> Optional[Box]:
+        return self.fetcher.fetch_box(box_id)
+
     def update_link(self, payload: dict) -> Optional[int]:
         link: Optional[Link] = self.fetcher.fetch_link(payload['id'])
         if link is not None:
