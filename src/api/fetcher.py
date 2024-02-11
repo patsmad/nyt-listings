@@ -48,5 +48,5 @@ class Fetcher:
     def fetch_box(self, box_id: int) -> Optional[Box]:
         db_box: Optional[DBBox] = self.db.fetch_box(box_id)
         if db_box is not None:
-            links = [Link.from_db(link, self.db.get_link_info(link.link)) for link in self.db.fetch_box_links(db_box.id)]
+            links = [Link.from_db(link, LinkInfo.from_db(self.db.get_link_info(link.link))) for link in self.db.fetch_box_links(db_box.id)]
             return Box.from_db(db_box, links)
