@@ -26,7 +26,11 @@ class Updater:
             'left': item.x - 100,
             'top': item.y - 100,
             'width': 200,
-            'height': 200
+            'height': 200,
+            'channel': None,
+            'time': None,
+            'duration_minutes': None,
+            'vcr_code': None
         })
         self.db.insert_box(box)
         return item_id
