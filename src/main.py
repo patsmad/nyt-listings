@@ -92,6 +92,23 @@ def link_add() -> dict:
     id: int = api.add_link(payload)
     return {'id': id}
 
+@app.route('/title/update/', methods=['POST'])
+@config.api_check
+def title_update() -> dict:
+    payload: dict = json.loads(request.data)
+    updated_id: Optional[int] = api.update_title(payload)
+    if updated_id is not None:
+        return {'id': updated_id}
+    else:
+        raise Exception('Link id <{}> not found'.format(payload.get('id')))
+
+@app.route('/title/add/', methods=['POST'])
+@config.api_check
+def title_add() -> dict:
+    payload: dict = json.loads(request.data)
+    id: int = api.add_title(payload)
+    return {'id': id}
+
 @app.route('/item/add/', methods=['POST'])
 @config.api_check
 def item_add() -> dict:
