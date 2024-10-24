@@ -459,3 +459,21 @@ class DB:
             ).fetchone()
         if result is not None:
             return LinkInfo(**result._asdict())
+
+    def fetch_link_info_by_title(self, title: str) -> Optional[LinkInfo]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'link_info.id, '
+                        'link_info.link, '
+                        'link_info.title, '
+                        'link_info.year, '
+                        'link_info.rating, '
+                        'link_info.votes, '
+                        'link_info.created_at, '
+                        'link_info.updated_at FROM link_info link_info '
+                        'WHERE link_info.title = :title '
+                        'ORDER BY link_info.votes DESC'), {'title': title}
+            ).fetchone()
+        if result is not None:
+            return LinkInfo(**result._asdict())

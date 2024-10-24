@@ -1,5 +1,6 @@
 from src.db.db import DB
 from src.db.model.link import Link as DBLink
+from src.db.model.link_info import LinkInfo as DBLinkInfo
 from src.db.model.box import Box as DBBox
 from src.model.annotated_file import AnnotatedFile
 from src.model.file import File
@@ -44,6 +45,11 @@ class Fetcher:
         if db_link is not None:
             link_info: Optional[LinkInfo] = LinkInfo.from_db(self.db.get_link_info(db_link.link))
             return Link.from_db(db_link, link_info=link_info)
+
+    def fetch_link_info_by_title(self, title: str) -> Optional[LinkInfo]:
+        db_link_info: Optional[DBLinkInfo] = self.db.fetch_link_info_by_title(title)
+        if db_link_info is not None:
+            return LinkInfo.from_db(db_link_info)
 
     def fetch_box(self, box_id: int) -> Optional[Box]:
         db_box: Optional[DBBox] = self.db.fetch_box(box_id)

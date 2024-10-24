@@ -4,6 +4,7 @@ from src.model.annotated_file import AnnotatedFile
 from src.model.file import File
 from src.model.link_file import LinkFiles
 from src.model.link import Link
+from src.model.link_info import LinkInfo
 from src.model.box import Box
 from typing import Optional
 
@@ -32,8 +33,24 @@ class API:
         if link is not None:
             return self.updater.update_link(link, payload)
 
+    def update_title(self, payload: dict) -> Optional[int]:
+        link: Optional[Link] = self.fetcher.fetch_link(payload['id'])
+        if link is not None:
+            link_info: Optional[LinkInfo] = self.fetcher.fetch_link_info_by_title(payload['title'])
+            if link_info is not None:
+                payload['link'] = link_info.link
+                return self.updater.update_link(link, payload)
+            else:
+                return link.id
+
     def add_link(self, payload: dict) -> int:
         return self.updater.add_link(payload)
+
+    def add_title(self, payload: dict) -> int:
+        link_info: Optional[LinkInfo] = self.fetcher.fetch_link_info_by_title(payload['title'])
+        if link_info is not None:
+            payload['link'] = link_info.link
+            return self.updater.add_link(payload)
 
     def add_item(self, payload: dict) -> int:
         return self.updater.add_item(payload)
