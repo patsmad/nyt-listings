@@ -17,7 +17,7 @@ def image_to_buf(image: Image) -> io.BytesIO:
     return buf
 
 def getImage(url: str) -> np.ndarray:
-    return imageio.imread_v2(url)
+    return imageio.imread_v2(url, 'JPEG-PIL')
 
 def resizeImage(image: np.ndarray, new_size: tuple):
     return resize(image, new_size, anti_aliasing=True)
