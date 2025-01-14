@@ -45,6 +45,15 @@ def link() -> dict:
    else:
        raise Exception('Must provide ?link=<link> for link request')
 
+@app.route('/title/', methods=['GET'])
+@config.api_check
+def title_search() -> dict:
+   title: str = request.args.get('title')
+   if title is not None:
+       return {'titles': [link_info.to_dict() for link_info in api.search_title(title)]}
+   else:
+       raise Exception('Must provide ?title=<title> for title request')
+
 @app.route('/box/', methods=['GET'])
 @config.api_check
 def box() -> dict:
