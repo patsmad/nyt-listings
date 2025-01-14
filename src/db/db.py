@@ -6,7 +6,7 @@ from src.model.box import Box as ModelBox
 from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
 import sqlalchemy as sa
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 class DB:
@@ -477,3 +477,19 @@ class DB:
             ).fetchone()
         if result is not None:
             return LinkInfo(**result._asdict())
+
+    def fetch_all_link_info(self) -> List[LinkInfo]:
+        with self.engine.connect() as con:
+            results = con.execute(
+                sa.text('SELECT '
+                        'link_info.id, '
+                        'link_info.link, '
+                        'link_info.title, '
+                        'link_info.year, '
+                        'link_info.rating, '
+                        'link_info.votes, '
+                        'link_info.created_at, '
+                        'link_info.updated_at FROM link_info link_info '
+                        )
+            ).fetchall()
+        return [LinkInfo(**result._asdict()) for result in results]

@@ -9,7 +9,8 @@ from src.model.box import Box
 from src.model.link import Link
 from src.model.link_file import LinkFile, LinkFiles
 from src.model.link_info import LinkInfo
-from typing import Optional
+from typing import List, Optional
+from fuzzywuzzy import fuzz
 
 class Fetcher:
     def __init__(self, db: DB):
@@ -39,6 +40,14 @@ class Fetcher:
         link_id_to_files: dict[int, File] = {link_id: File.from_db(file) for link_id, file in self.db.fetch_link_id_to_files(link).items()}
         link_files: list[LinkFile] = [LinkFile.build(link, link_id_to_files, link_id_to_boxes, link_id_to_items) for link in links]
         return LinkFiles.build(link, link_info, link_files)
+
+    def search_title(self, title: str) -> List[LinkInfo]:
+        link_infos = sorted(
+            self.db.fetch_all_link_info(),
+            key=lambda link_info: fuzz.ratio(link_info.title, title),
+            reverse=True
+        )[:20]
+        return [LinkInfo.from_db(link_info) for link_info in link_infos]
 
     def fetch_link(self, link_id: int) -> Optional[Link]:
         db_link: Optional[DBLink] = self.db.fetch_link(link_id)
