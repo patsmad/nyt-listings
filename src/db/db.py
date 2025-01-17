@@ -6,7 +6,7 @@ from src.model.box import Box as ModelBox
 from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
 import sqlalchemy as sa
-from typing import List, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 
 class DB:
@@ -55,7 +55,7 @@ class DB:
         with self.engine.connect() as con:
             id = con.execute(
                 sa.text('INSERT INTO files (name, file_date) VALUES(:name, :file_date) RETURNING files.id'),
-                file.dict()
+                file.model_dump()
             ).first()[0]
             con.commit()
         return id
@@ -89,7 +89,7 @@ class DB:
     def _insert_item(self, con: sa.Connection, item: InputItem) -> int:
         return con.execute(
             sa.text('INSERT INTO items (file_id, x, y) VALUES(:file_id, :x, :y) RETURNING items.id'),
-            item.dict()
+            item.model_dump()
         ).first()[0]
 
     def insert_item(self, item: InputItem) -> int:
@@ -148,7 +148,7 @@ class DB:
         return con.execute(
             sa.text('INSERT INTO boxes (item_id, left, top, width, height, channel, time, duration_minutes, vcr_code) '
                     'VALUES(:item_id, :left, :top, :width, :height, :channel, :time, :duration_minutes, :vcr_code) RETURNING boxes.id'),
-            box.dict()
+            box.model_dump()
         ).first()[0]
 
     def insert_box(self, box: InputBox) -> int:
@@ -283,7 +283,7 @@ class DB:
         return con.execute(
             sa.text('INSERT INTO links (box_id, link, confirmed) '
                     'VALUES(:box_id, :link, :confirmed) RETURNING links.id'),
-            link.dict()
+            link.model_dump()
         ).first()[0]
 
     def insert_link(self, link: InputLink) -> int:
@@ -389,7 +389,7 @@ class DB:
     def _fetch_link_info_id(self, con: sa.Connection, link_info: InputLinkInfo) -> int | None:
         id = con.execute(
             sa.text('SELECT id FROM link_info WHERE link = :link'),
-            link_info.dict()
+            link_info.model_dump()
         ).fetchone()
         if id is not None:
             return id[0]
@@ -398,7 +398,7 @@ class DB:
         return con.execute(
             sa.text('INSERT INTO link_info (link, title, year, rating, votes) '
                     'VALUES(:link, :title, :year, :rating, :votes) RETURNING link_info.id'),
-            link_info.dict()
+            link_info.model_dump()
         ).first()[0]
 
     def _update_link_info(self, con: sa.Connection, link_info: InputLinkInfo, link_info_id: int) -> int:
@@ -489,7 +489,21 @@ class DB:
                         'link_info.rating, '
                         'link_info.votes, '
                         'link_info.created_at, '
-                        'link_info.updated_at FROM link_info link_info '
+                        'link_info.updated_at FROM link_info link_info'
                         )
             ).fetchall()
         return [LinkInfo(**result._asdict()) for result in results]
+
+    def count(self, link: str) -> int:
+        with self.engine.connect() as con:
+            results = con.execute(
+                sa.text('SELECT '
+                        'box.vcr_code, '
+                        'COUNT(*) as count FROM '
+                        'link_info link_info JOIN '
+                        'links link ON link_info.link = link.link JOIN '
+                        'boxes box ON link.box_id = box.id '
+                        'WHERE link.link = :link '
+                        'GROUP BY box.vcr_code'),{'link': link}
+            ).fetchall()
+        return sum([result[1] if result[0] is None else 1 for result in results])

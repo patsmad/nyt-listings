@@ -49,6 +49,9 @@ class Fetcher:
         )[:20]
         return [LinkInfo.from_db(link_info) for link_info in link_infos]
 
+    def count(self, link: str) -> int:
+        return self.db.count(link)
+
     def fetch_link(self, link_id: int) -> Optional[Link]:
         db_link: Optional[DBLink] = self.db.fetch_link(link_id)
         if db_link is not None:

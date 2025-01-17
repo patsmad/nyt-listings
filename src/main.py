@@ -50,7 +50,12 @@ def link() -> dict:
 def title_search() -> dict:
    title: str = request.args.get('title')
    if title is not None:
-       return {'titles': [link_info.to_dict() for link_info in api.search_title(title)]}
+       titles = []
+       for link_info in api.search_title(title):
+           link_info_dict = link_info.model_dump()
+           link_info_dict['count'] = api.get_count(link_info.link)
+           titles.append(link_info_dict)
+       return {'titles': titles}
    else:
        raise Exception('Must provide ?title=<title> for title request')
 

@@ -28,6 +28,9 @@ class API:
     def search_title(self, title: str) -> List[LinkInfo]:
         return self.fetcher.search_title(title)
 
+    def get_count(self, link: str) -> int:
+        return self.fetcher.count(link)
+
     def get_box(self, box_id: int) -> Optional[Box]:
         return self.fetcher.fetch_box(box_id)
 
