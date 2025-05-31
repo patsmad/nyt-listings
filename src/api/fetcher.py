@@ -49,6 +49,14 @@ class Fetcher:
         )[:20]
         return [LinkInfo.from_db(link_info) for link_info in link_infos]
 
+    def search_year(self, year: int) -> List[LinkInfo]:
+        link_infos = sorted(
+            self.db.fetch_year_link_info(year),
+            key=lambda link_info: link_info.votes,
+            reverse=True
+        )
+        return [LinkInfo.from_db(link_info) for link_info in link_infos]
+
     def count(self, link: str) -> int:
         return self.db.count(link)
 

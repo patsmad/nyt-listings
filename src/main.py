@@ -59,6 +59,20 @@ def title_search() -> dict:
    else:
        raise Exception('Must provide ?title=<title> for title request')
 
+@app.route('/year/', methods=['GET'])
+@config.api_check
+def year_search() -> dict:
+   year: int = int(request.args.get('year'))
+   if year is not None:
+       years = []
+       for link_info in api.search_year(year):
+           link_info_dict = link_info.model_dump()
+           link_info_dict['count'] = api.get_count(link_info.link)
+           years.append(link_info_dict)
+       return {'years': sorted(years, key=lambda y: y['count'], reverse=True)}
+   else:
+       raise Exception('Must provide ?year=<year> for year request')
+
 @app.route('/box/', methods=['GET'])
 @config.api_check
 def box() -> dict:

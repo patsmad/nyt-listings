@@ -28,6 +28,9 @@ class API:
     def search_title(self, title: str) -> List[LinkInfo]:
         return self.fetcher.search_title(title)
 
+    def search_year(self, year: int) -> List[LinkInfo]:
+        return self.fetcher.search_year(year)
+
     def get_count(self, link: str) -> int:
         return self.fetcher.count(link)
 

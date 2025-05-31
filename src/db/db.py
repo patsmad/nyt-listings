@@ -494,6 +494,23 @@ class DB:
             ).fetchall()
         return [LinkInfo(**result._asdict()) for result in results]
 
+    def fetch_year_link_info(self, year) -> List[LinkInfo]:
+        with self.engine.connect() as con:
+            results = con.execute(
+                sa.text('SELECT '
+                        'link_info.id, '
+                        'link_info.link, '
+                        'link_info.title, '
+                        'link_info.year, '
+                        'link_info.rating, '
+                        'link_info.votes, '
+                        'link_info.created_at, '
+                        'link_info.updated_at FROM link_info link_info '
+                        'WHERE link_info.year = :year AND link_info.votes >= 3000'
+                        ), {'year': year}
+            ).fetchall()
+        return [LinkInfo(**result._asdict()) for result in results]
+
     def count(self, link: str) -> int:
         with self.engine.connect() as con:
             results = con.execute(
