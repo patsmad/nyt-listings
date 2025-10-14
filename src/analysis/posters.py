@@ -35,7 +35,7 @@ class PosterFetcher:
         if maybe_poster_url is not None:
             maybe_poster_src = self.get_poster_src(maybe_poster_url)
             if maybe_poster_src is not None:
-                print(key, maybe_poster_url)
+                print(key, maybe_poster_url, maybe_poster_src)
                 poster_image_prior = getImage(maybe_poster_src)
                 poster_image = resizeImage(poster_image_prior, (210, 140))
                 writeImage(poster_image, f'{data_path}/data/posters/{key}.jpg')
