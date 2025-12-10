@@ -8,12 +8,16 @@ class File(BaseModel):
     id: int
     name: str
     file_date: Optional[datetime]
+    width: Optional[int]
+    height: Optional[int]
 
     def to_dict(self) -> dict:
         return {
             'id': self.id,
             'name': self.name,
-            'file_date': self.file_date
+            'file_date': self.file_date,
+            'width': self.width,
+            'height': self.height
         }
 
     @staticmethod
@@ -21,5 +25,7 @@ class File(BaseModel):
         return File(**{
             'id': file.id,
             'name': file.name,
-            'file_date': file.file_date
+            'file_date': file.file_date,
+            'width': file.width,
+            'height': file.height
         })

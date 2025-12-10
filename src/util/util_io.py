@@ -1,3 +1,4 @@
+import glob
 import gzip
 import json
 import os
@@ -17,6 +18,9 @@ def mkdir(fname):
 def rmdir(fname):
     if pathExists(fname):
         shutil.rmtree(f'{data_path}/{fname}')
+
+def getFiles(path):
+    return glob.glob(f'{data_path}/{path}')
 
 def readJSON(fname: str) -> dict | list:
     with open(f'{data_path}/{fname}', 'r') as f:

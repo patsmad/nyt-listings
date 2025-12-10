@@ -1,4 +1,4 @@
-from src.util.util_io import readJSON, downloadFile, unzipGZFile, readTSV, mkdir, rmdir, data_path
+from src.util.util_io import getFiles, readJSON, downloadFile, unzipGZFile, readTSV, mkdir, rmdir, data_path
 from src.util.image import open_image, crop_image
 from src.util.ocr import get_text
 from .db import DB
@@ -11,6 +11,7 @@ from .model.link_info import InputLinkInfo
 import re
 import glob
 import os
+import datetime
 
 class DBIO:
     def __init__(self, db: DB, api: API):
@@ -27,10 +28,24 @@ class DBIO:
         confirmed: bool = link['confirmed'] if link['confirmed'] is not None else False
         return InputLink(box_id=box_id, link=link['link'], confirmed=confirmed)
 
+    def add_files(self) -> None:
+        all_files = [file.name for file in self.db.fetch_all_files()]
+        for file in getFiles('data/files/*'):
+            file_name = os.path.basename(file)
+            if file_name not in all_files:
+                img = open_image(f'{data_path}/data/files/{file_name}')
+                width, height = img.size
+                date = re.findall('.*([0-9]{4}_[0-9]{2}_[0-9]{2}).*', file_name)[0]
+                dt = datetime.datetime.strptime(date, '%Y_%m_%d')
+                file_id: int = self.db.insert_file(
+                    InputFile(**{'name': file_name, 'file_date': dt, 'width': width, 'height': height})
+                )
+                print(file_id)
+
     def from_file_to_db(self, fname) -> None:
         files_to_add: dict = readJSON(fname)
         for file in files_to_add:
-            file_id: int = self.db.insert_file(InputFile(**{'name': file['name'], 'date': None}))
+            file_id: int = self.db.insert_file(InputFile(**{'name': file['name'], 'file_date': None}))
             count = 0
             with self.db.engine.connect() as con:
                 for item in file['items']:

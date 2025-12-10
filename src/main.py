@@ -7,9 +7,12 @@ from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
 import re
+import os
+from util.ai_studio import AIStudioAPI
 from util.config import Config
-from util.util_io import data_path, pathExists
 from util.image import open_image, crop_image, image_to_buf
+from util.local_llm import LocalLLMAPI
+from util.util_io import data_path, pathExists
 from typing import Optional
 
 config = Config()
@@ -19,6 +22,10 @@ CORS(app)
 api: API = api_builder.build()
 db_io: DBIO = db_io_builder.build()
 poster_fetcher: PosterFetcher = poster_fetcher_builder.build()
+if os.environ.get('USE_LOCAL', False):
+    llm = LocalLLMAPI()
+else:
+    llm = AIStudioAPI()
 
 
 # TODO: Exceptions should be HTTP errors with a BMT themed splash page
@@ -35,6 +42,32 @@ def file() -> dict:
       return api.get_file(file_id).to_dict()
    else:
       raise Exception('Must provide ?filename=<filename> for file request')
+
+@app.route('/file/parse/', methods=['POST'])
+@config.api_check
+def file_parse() -> dict:
+    payload: dict = json.loads(request.data)
+    maybe_file_id: Optional[str] = payload.get('file_id')
+    if maybe_file_id is not None:
+        file_name: Optional[str] = api.get_file_name(int(maybe_file_id))
+        if file_name is not None and pathExists(f'data/files/{file_name}'):
+            img = open_image(f'{data_path}/data/files/{file_name}')
+            boxes = llm.get_boxes_for_image(img)
+            print(len(boxes))
+            for box in boxes:
+                item_id: int = api.add_item({
+                    'file_id': maybe_file_id,
+                    'left': box['left'],
+                    'top': box['top'],
+                    'width': box['width'],
+                    'height': box['height']
+                })
+                print(f'Added item {item_id} to file {maybe_file_id}')
+            return {'status': 'SUCCESS'}
+        else:
+            raise Exception('Invalid filename request')
+    else:
+        raise Exception('Must provide ?filename=<filename> for img request')
 
 @app.route('/link/', methods=['GET'])
 @config.api_check
@@ -137,6 +170,29 @@ def title_add() -> dict:
     id: int = api.add_title(payload)
     return {'id': id}
 
+@app.route('/title/check/', methods=['POST'])
+@config.api_check
+def title() -> dict:
+    payload: dict = json.loads(request.data)
+    file_id = payload['file_id']
+    file_name: Optional[str] = api.get_file_name(int(payload['file_id']))
+    if pathExists(f'data/files/{file_name}'):
+        img = open_image(f'{data_path}/data/files/{file_name}')
+        annotated_file = api.get_file(file_id)
+        succeeded = {}
+        for item in annotated_file.items:
+            for box in item.boxes:
+                if len(box.links) == 0:
+                    cropped_img = crop_image(img, box.left, box.top, box.width, box.height)
+                    title = llm.get_title_for_image(cropped_img)
+                    id: int = api.add_title({'box_id': box.id, 'confirmed': True, 'title': title.strip()})
+                    print(id, title.strip())
+                    if id is not None:
+                        succeeded[id] = title.strip()
+        return succeeded
+    else:
+        raise Exception('Invalid filename request')
+
 @app.route('/item/add/', methods=['POST'])
 @config.api_check
 def item_add() -> dict:
@@ -227,6 +283,10 @@ def from_file_to_db(filename):
     db_io.from_file_to_db(filename)
 
 @click.command()
+def add_files():
+    db_io.add_files()
+
+@click.command()
 def update_imdb_data():
     db_io.update_imdb_data()
 
@@ -253,6 +313,7 @@ def server():
     app.run(debug=True)
 
 cli.add_command(server)
+cli.add_command(add_files)
 cli.add_command(from_file_to_db)
 cli.add_command(update_imdb_data)
 cli.add_command(fill_missing_posters)

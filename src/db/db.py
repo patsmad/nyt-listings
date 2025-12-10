@@ -1,12 +1,13 @@
 from .model.item import Item, InputItem
 from .model.box import Box, InputBox
 from .model.link import Link, InputLink
+from src.model.file import File as ModelFile
 from src.model.link import Link as ModelLink
 from src.model.box import Box as ModelBox
 from .model.link_info import LinkInfo, InputLinkInfo
 from .model.file import File, InputFile
 import sqlalchemy as sa
-from typing import Dict, List, Optional
+from typing import List, Optional
 from datetime import datetime
 
 class DB:
@@ -20,6 +21,8 @@ class DB:
                         'file.id, '
                         'file.name, '
                         'file.file_date, '
+                        'file.width, '
+                        'file.height, '
                         'file.created_at, '
                         'file.updated_at FROM files file')
             ).fetchall()
@@ -32,6 +35,8 @@ class DB:
                         'file.id, '
                         'file.name, '
                         'file.file_date, '
+                        'file.width, '
+                        'file.height, '
                         'file.created_at, '
                         'file.updated_at FROM files file WHERE file.id = :id'),
                 {'id': id}
@@ -45,6 +50,8 @@ class DB:
                         'file.id, '
                         'file.name, '
                         'file.file_date, '
+                        'file.width, '
+                        'file.height, '
                         'file.created_at, '
                         'file.updated_at FROM files file WHERE file.name = :name'),
                 {'name': name}
@@ -54,11 +61,25 @@ class DB:
     def insert_file(self, file: InputFile) -> int:
         with self.engine.connect() as con:
             id = con.execute(
-                sa.text('INSERT INTO files (name, file_date) VALUES(:name, :file_date) RETURNING files.id'),
+                sa.text('INSERT INTO files (name, file_date, width, height) VALUES(:name, :file_date, :width, :height) RETURNING files.id'),
                 file.model_dump()
             ).first()[0]
             con.commit()
         return id
+
+    def update_file(self, file: ModelFile) -> Optional[int]:
+        with self.engine.connect() as con:
+            maybeId = con.execute(
+                sa.text('UPDATE files '
+                        'SET file_date = :file_date, '
+                        'width = :width, '
+                        'height = :height, '
+                        'updated_at = CURRENT_TIMESTAMP '
+                        'WHERE id = :id RETURNING id'),
+                {'id': file.id, 'file_date': file.file_date, 'width': file.width, 'height': file.height}
+            ).first()
+            con.commit()
+        return maybeId[0] if maybeId is not None else None
 
     def delete_file(self, id: int) -> Optional[int]:
         with self.engine.connect() as con:
@@ -77,6 +98,8 @@ class DB:
                         'file.id, '
                         'file.name, '
                         'file.file_date, '
+                        'file.width, '
+                        'file.height, '
                         'file.created_at, '
                         'file.updated_at FROM links link '
                         'JOIN boxes box ON link.box_id = box.id '
@@ -472,8 +495,8 @@ class DB:
                         'link_info.votes, '
                         'link_info.created_at, '
                         'link_info.updated_at FROM link_info link_info '
-                        'WHERE link_info.title = :title '
-                        'ORDER BY link_info.votes DESC'), {'title': title}
+                        'WHERE UPPER(link_info.title) = :title '
+                        'ORDER BY link_info.votes DESC'), {'title': title.upper()}
             ).fetchone()
         if result is not None:
             return LinkInfo(**result._asdict())
