@@ -1,5 +1,6 @@
 {
     "api-key": "",
     "headers": {},
-    "path_to_tesseract": ""
+    "path_to_tesseract": "",
+    "gemini_api_key": ""
 }
