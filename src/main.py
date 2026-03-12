@@ -311,8 +311,14 @@ def fill_vcr_files(files):
     db_io.fill_vcr_files(files)
 
 @click.command()
-def server():
-    app.run(debug=True)
+@click.option(
+    "--host",
+    type=str,
+    default='127.0.0.1',
+    help="The host name or IP address (default: 127.0.0.1)",
+)
+def server(host):
+    app.run(debug=True, host=host)
 
 cli.add_command(server)
 cli.add_command(from_file_to_db)
