@@ -1,16 +1,16 @@
-from api.api import API
-from builder import api_builder, db_io_builder, poster_fetcher_builder
+from src.api.api import API
+from src.builder import api_builder, db_io_builder, poster_fetcher_builder
 import click
-from db.io import DBIO
-from analysis.posters import PosterFetcher
+from src.db.io import DBIO
+from src.analysis.posters import PosterFetcher
 from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
 import re
-from util.llm import LLM
-from util.config import Config
-from util.util_io import data_path, pathExists
-from util.image import open_image, crop_image, image_to_buf
+from src.util.llm import LLM
+from src.util.config import Config
+from src.util.util_io import data_path, pathExists
+from src.util.image import open_image, crop_image, image_to_buf
 from typing import Optional
 from src.analysis.vcr_code import VCRCodeCalculator
 

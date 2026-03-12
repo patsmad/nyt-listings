@@ -1,9 +1,9 @@
-from api.api import API
-from api.fetcher import Fetcher
-from api.updater import Updater
-from db.db import DB
-from db.io import DBIO
-from analysis.posters import PosterFetcher
+from src.api.api import API
+from src.api.fetcher import Fetcher
+from src.api.updater import Updater
+from src.db.db import DB
+from src.db.io import DBIO
+from src.analysis.posters import PosterFetcher
 import sqlalchemy as sa
 from typing import TypeVar, Generic, Callable, Optional
 
@@ -24,7 +24,7 @@ class EngineBuilder(Builder[sa.Engine]):
         super().__init__(self.get_engine)
 
     def get_engine(self) -> sa.Engine:
-        return sa.create_engine('sqlite:///../data/NYTListings.db')
+        return sa.create_engine('sqlite:///data/NYTListings.db')
 
 class DBBuilder(Builder[DB]):
     def __init__(self) -> None:
