@@ -7,7 +7,7 @@ from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
 import re
-from util.ai_studio import AIStudioAPI
+from util.llm import LLM
 from util.config import Config
 from util.util_io import data_path, pathExists
 from util.image import open_image, crop_image, image_to_buf
@@ -21,7 +21,7 @@ CORS(app)
 api: API = api_builder.build()
 db_io: DBIO = db_io_builder.build()
 poster_fetcher: PosterFetcher = poster_fetcher_builder.build()
-aistudio = AIStudioAPI()
+llm = LLM()
 
 
 # TODO: Exceptions should be HTTP errors with a BMT themed splash page
@@ -75,6 +75,11 @@ def year_search() -> dict:
        return {'years': sorted(years, key=lambda y: y['count'], reverse=True)}
    else:
        raise Exception('Must provide ?year=<year> for year request')
+
+@app.route('/empty_boxes/', methods=['GET'])
+@config.api_check
+def empty_boxes() -> list:
+   return [box_file.to_dict() for box_file in api.get_empty_boxes()]
 
 @app.route('/box/', methods=['GET'])
 @config.api_check
@@ -187,7 +192,7 @@ def vcr_code_check_single() -> dict:
     if pathExists(f'data/files/{file.name}') and box is not None:
         img = open_image(f'{data_path}/data/files/{file.name}')
         cropped_img = crop_image(img, box.left, box.top, box.width, box.height)
-        vcr_code = aistudio.get_vcr_code_for_image(cropped_img)
+        vcr_code = llm.get_llm().get_vcr_code_for_image(cropped_img)
         channel_info = VCRCodeCalculator.from_vcr_code(file.file_date.year,
                                                        file.file_date.month,
                                                        file.file_date.day,
@@ -215,7 +220,7 @@ def vcr_code_check_link() -> dict:
         if link_file.vcr_code is None and link_file.file_date.year > 1990:
             img = open_image(f'{data_path}/data/files/{link_file.file}')
             cropped_img = crop_image(img, link_file.left, link_file.top, link_file.width, link_file.height)
-            vcr_code = aistudio.get_vcr_code_for_image(cropped_img)
+            vcr_code = llm.get_llm().get_vcr_code_for_image(cropped_img)
             channel_info = VCRCodeCalculator.from_vcr_code(link_file.file_date.year,
                                                            link_file.file_date.month,
                                                            link_file.file_date.day,

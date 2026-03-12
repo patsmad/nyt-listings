@@ -6,6 +6,7 @@ from src.model.annotated_file import AnnotatedFile
 from src.model.file import File
 from src.model.item import Item
 from src.model.box import Box
+from src.model.box_file import BoxFile
 from src.model.link import Link
 from src.model.link_file import LinkFile, LinkFiles
 from src.model.link_info import LinkInfo
@@ -40,6 +41,13 @@ class Fetcher:
         link_id_to_files: dict[int, File] = {link_id: File.from_db(file) for link_id, file in self.db.fetch_link_id_to_files(link).items()}
         link_files: list[LinkFile] = [LinkFile.build(link, link_id_to_files, link_id_to_boxes, link_id_to_items) for link in links]
         return LinkFiles.build(link, link_info, link_files)
+
+    def get_empty_boxes(self) -> list[BoxFile]:
+        boxes: List[Box] = [Box.from_db(box, []) for box in self.db.fetch_empty_boxes()]
+        box_map: dict[int, Box] = {box.id: box for box in boxes}
+        box_id_to_items: dict[int, Item] = {box_id: Item.from_db(item, [box_map[box_id]]) for box_id, item in self.db.fetch_box_ids_to_items(list(box_map.keys())).items()}
+        box_id_to_files: dict[int, File] = {box_id: File.from_db(file) for box_id, file in self.db.fetch_box_ids_to_files(list(box_map.keys())).items()}
+        return [BoxFile.build(box, box_id_to_files, box_id_to_items) for box in boxes]
 
     def search_title(self, title: str) -> List[LinkInfo]:
         link_infos = sorted(

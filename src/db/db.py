@@ -86,6 +86,22 @@ class DB:
             )
         return {file.link_id: File(**file._asdict()) for file in result.fetchall()}
 
+    def fetch_box_ids_to_files(self, box_ids: List[int]) -> dict[int, File]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id AS box_id, '
+                        'file.id, '
+                        'file.name, '
+                        'file.file_date, '
+                        'file.created_at, '
+                        'file.updated_at FROM boxes box '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE box.id IN (' + ', '.join(map(str, box_ids)) +')')
+            )
+        return {file.box_id: File(**file._asdict()) for file in result.fetchall()}
+
     def _insert_item(self, con: sa.Connection, item: InputItem) -> int:
         return con.execute(
             sa.text('INSERT INTO items (file_id, x, y) VALUES(:file_id, :x, :y) RETURNING items.id'),
@@ -143,6 +159,22 @@ class DB:
                         'WHERE link.link = :link'), {'link': link}
             )
         return {item.link_id: Item(**item._asdict()) for item in result.fetchall()}
+
+    def fetch_box_ids_to_items(self, box_ids: List[int]) -> dict[int, Item]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id AS box_id, '
+                        'item.id, '
+                        'item.x, '
+                        'item.y, '
+                        'item.file_id, '
+                        'item.created_at, '
+                        'item.updated_at FROM boxes box '
+                        'JOIN items item ON box.item_id = item.id '
+                        'WHERE box.id IN (' + ', '.join(map(str, box_ids)) +')')
+            )
+        return {item.box_id: Item(**item._asdict()) for item in result.fetchall()}
 
     def _insert_box(self, con: sa.Connection, box: InputBox) -> int:
         return con.execute(
@@ -212,6 +244,31 @@ class DB:
                         'JOIN items item ON box.item_id = item.id '
                         'JOIN files file ON item.file_id = file.id '
                         'WHERE file.id = :file_id'), {'file_id': file_id}
+            )
+        return [Box(**box._asdict()) for box in result.fetchall()]
+
+    def fetch_empty_boxes(self) -> list[Box]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id, '
+                        'box.item_id, '
+                        'box.left, '
+                        'box.top, '
+                        'box.width, '
+                        'box.height, '
+                        'box.channel, '
+                        'box.time, '
+                        'box.duration_minutes, '
+                        'box.vcr_code, '
+                        'box.created_at, '
+                        'box.updated_at FROM boxes box '
+                        'LEFT JOIN links link ON link.box_id = box.id '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE link.link IS NULL AND file.file_date between \'1991-05-01\' AND \'1991-06-01\' '
+                        'ORDER BY file.file_date '
+                        'LIMIT 300'), {}
             )
         return [Box(**box._asdict()) for box in result.fetchall()]
 
@@ -462,7 +519,7 @@ class DB:
 
     def fetch_link_info_by_title(self, title: str) -> Optional[LinkInfo]:
         with self.engine.connect() as con:
-            result = con.execute(
+            results = con.execute(
                 sa.text('SELECT '
                         'link_info.id, '
                         'link_info.link, '
@@ -472,11 +529,15 @@ class DB:
                         'link_info.votes, '
                         'link_info.created_at, '
                         'link_info.updated_at FROM link_info link_info '
-                        'WHERE link_info.title = :title '
-                        'ORDER BY link_info.votes DESC'), {'title': title}
-            ).fetchone()
-        if result is not None:
-            return LinkInfo(**result._asdict())
+                        'WHERE UPPER(link_info.title) = :title '
+                        'ORDER BY link_info.votes DESC'), {'title': title.upper()}
+            ).fetchall()
+        if len(results) > 0:
+            if len(results) > 1:
+                for result in results:
+                    print(result)
+            else:
+                return LinkInfo(**results[0]._asdict())
 
     def fetch_all_link_info(self) -> List[LinkInfo]:
         with self.engine.connect() as con:
