@@ -7,10 +7,12 @@ from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
 import re
+from util.llm import LLM
 from util.config import Config
 from util.util_io import data_path, pathExists
 from util.image import open_image, crop_image, image_to_buf
 from typing import Optional
+from src.analysis.vcr_code import VCRCodeCalculator
 
 config = Config()
 app = Flask(__name__)
@@ -19,6 +21,7 @@ CORS(app)
 api: API = api_builder.build()
 db_io: DBIO = db_io_builder.build()
 poster_fetcher: PosterFetcher = poster_fetcher_builder.build()
+llm = LLM()
 
 
 # TODO: Exceptions should be HTTP errors with a BMT themed splash page
@@ -72,6 +75,11 @@ def year_search() -> dict:
        return {'years': sorted(years, key=lambda y: y['count'], reverse=True)}
    else:
        raise Exception('Must provide ?year=<year> for year request')
+
+@app.route('/empty_boxes/', methods=['GET'])
+@config.api_check
+def empty_boxes() -> list:
+   return [box_file.to_dict() for box_file in api.get_empty_boxes()]
 
 @app.route('/box/', methods=['GET'])
 @config.api_check
@@ -173,6 +181,60 @@ def vcr_code_update() -> dict:
         return {'id': updated_id}
     else:
         raise Exception('Box id <{}> not found'.format(payload.get('id')))
+
+@app.route('/vcr_code/check_single/', methods=['POST'])
+@config.api_check
+def vcr_code_check_single() -> dict:
+    payload: dict = json.loads(request.data)
+    box_id = payload['box_id']
+    file = api.get_file(int(payload['file_id']))
+    box = api.get_box(box_id)
+    if pathExists(f'data/files/{file.name}') and box is not None:
+        img = open_image(f'{data_path}/data/files/{file.name}')
+        cropped_img = crop_image(img, box.left, box.top, box.width, box.height)
+        vcr_code = llm.get_llm().get_vcr_code_for_image(cropped_img)
+        channel_info = VCRCodeCalculator.from_vcr_code(file.file_date.year,
+                                                       file.file_date.month,
+                                                       file.file_date.day,
+                                                       vcr_code, 0)
+        print(box.id, vcr_code, channel_info)
+        if channel_info is not None:
+            box_id = api.update_box({'id': box.id,
+                                     'year': channel_info.time.year,
+                                     'month': channel_info.time.month,
+                                     'day': channel_info.time.day,
+                                     'vcr_code': vcr_code})
+            if box_id is not None:
+                return {'status': 'SUCCESS', 'vcr_code': vcr_code}
+        return {'status': 'FAILED', 'vcr_code': vcr_code}
+    else:
+        raise Exception('Invalid filename request')
+
+@app.route('/vcr_code/check_link/', methods=['POST'])
+@config.api_check
+def vcr_code_check_link() -> dict:
+    payload: dict = json.loads(request.data)
+    link = api.get_link(payload['link'])
+    successes = []
+    for link_file in link.link_files:
+        if link_file.vcr_code is None and link_file.file_date.year > 1990:
+            img = open_image(f'{data_path}/data/files/{link_file.file}')
+            cropped_img = crop_image(img, link_file.left, link_file.top, link_file.width, link_file.height)
+            vcr_code = llm.get_llm().get_vcr_code_for_image(cropped_img)
+            channel_info = VCRCodeCalculator.from_vcr_code(link_file.file_date.year,
+                                                           link_file.file_date.month,
+                                                           link_file.file_date.day,
+                                                           vcr_code, 0)
+            print(link_file.box_id, vcr_code, channel_info)
+            if channel_info is not None:
+                box_id = api.update_box({'id': link_file.box_id,
+                                         'year': channel_info.time.year,
+                                         'month': channel_info.time.month,
+                                         'day': channel_info.time.day,
+                                         'vcr_code': vcr_code})
+                if box_id is not None:
+                    successes.append(box_id)
+    return {'successes': len(successes)}
 
 @app.route('/channel/update/', methods=['POST'])
 @config.api_check

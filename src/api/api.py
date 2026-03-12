@@ -6,6 +6,7 @@ from src.model.link_file import LinkFiles
 from src.model.link import Link
 from src.model.link_info import LinkInfo
 from src.model.box import Box
+from src.model.box_file import BoxFile
 from typing import List, Optional
 
 class API:
@@ -24,6 +25,9 @@ class API:
 
     def get_link(self, link: str) -> LinkFiles:
         return self.fetcher.get_link(link)
+
+    def get_empty_boxes(self) -> List[BoxFile]:
+        return self.fetcher.get_empty_boxes()
 
     def search_title(self, title: str) -> List[LinkInfo]:
         return self.fetcher.search_title(title)

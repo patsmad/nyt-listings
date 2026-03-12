@@ -19,14 +19,18 @@ class Updater:
         return self.db.insert_link(link)
 
     def add_item(self, payload: dict) -> int:
-        item: InputItem = InputItem(**payload)
+        item: InputItem = InputItem(**{
+            'file_id': payload['file_id'],
+            'x': int(payload['left'] + payload['width'] / 2),
+            'y': int(payload['top'] + payload['height'] / 2)
+        })
         item_id = self.db.insert_item(item)
         box: InputBox = InputBox(**{
             'item_id': item_id,
-            'left': item.x - 100,
-            'top': item.y - 100,
-            'width': 200,
-            'height': 200,
+            'left': payload['left'],
+            'top': payload['top'],
+            'width': payload['width'],
+            'height': payload['height'],
             'channel': None,
             'time': None,
             'duration_minutes': None,
