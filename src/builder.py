@@ -6,6 +6,7 @@ from db.io import DBIO
 from analysis.posters import PosterFetcher
 import sqlalchemy as sa
 from typing import TypeVar, Generic, Callable, Optional
+from util.tmdb_api import TMDBAPI
 
 T = TypeVar('T')
 
@@ -61,12 +62,19 @@ class DBIOBuilder(Builder[DBIO]):
     def get_api(self) -> DBIO:
         return DBIO(db_builder.build(), api_builder.build())
 
+class TMDBAPIBuilder(Builder[TMDBAPI]):
+    def __init__(self) -> None:
+        super().__init__(self.get_api)
+
+    def get_api(self) -> TMDBAPI:
+        return TMDBAPI()
+
 class PosterFetcherBuilder(Builder[PosterFetcher]):
     def __init__(self) -> None:
         super().__init__(self.get_api)
 
     def get_api(self) -> PosterFetcher:
-        return PosterFetcher(db_builder.build())
+        return PosterFetcher(db_builder.build(), tmdb_api_builder.build())
 
 engine_builder: EngineBuilder = EngineBuilder()
 db_builder: DBBuilder = DBBuilder()
@@ -74,4 +82,5 @@ fetcher_builder: FetcherBuilder = FetcherBuilder()
 updater_builder: UpdaterBuilder = UpdaterBuilder()
 api_builder: APIBuilder = APIBuilder()
 db_io_builder: DBIOBuilder = DBIOBuilder()
+tmdb_api_builder: TMDBAPIBuilder = TMDBAPIBuilder()
 poster_fetcher_builder: PosterFetcherBuilder = PosterFetcherBuilder()

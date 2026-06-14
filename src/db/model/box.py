@@ -9,10 +9,6 @@ class Box(BaseModel):
     top: int
     width: int
     height: int
-    channel: Optional[str]
-    time: Optional[datetime]
-    duration_minutes: Optional[int]
-    vcr_code: Optional[int]
     created_at: datetime
     updated_at: datetime
 
@@ -22,7 +18,3 @@ class InputBox(BaseModel):
     top: int
     width: int
     height: int
-    channel: Optional[str]
-    time: Optional[datetime]
-    duration_minutes: Optional[int]
-    vcr_code: Optional[int]

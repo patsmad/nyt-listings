@@ -1,38 +1,36 @@
 from .util_io import readJSON
-from flask import request
+from flask import request, jsonify
 from functools import wraps
-from typing import Optional, Callable
+from typing import Callable
+
+import httpx
+from clerk_backend_api import Clerk, RequestState
+from clerk_backend_api.security.types import AuthenticateRequestOptions
 
 class Config:
     def __init__(self) -> None:
         config: dict = readJSON('config')
-        self.api_key: str = config['api-key']
         self.headers: dict = config['headers']
-        self.path_to_tesseract = config['path_to_tesseract']
-        self.gemini_api_key = config['gemini_api_key']
+        self.tmdb_api_key = config['tmdb_api_key']
+        self.clerk_secret_key = config['clerk_secret_key']
+        self.origin = config['origin']
 
-    def api_key_match(self, api_key: str) -> bool:
-        return api_key == self.api_key
+    def get_request_state(self, request: httpx.Request) -> RequestState:
+        sdk = Clerk(bearer_auth=self.clerk_secret_key)
+        request_state = sdk.authenticate_request(
+            request,
+            AuthenticateRequestOptions(
+                authorized_parties=[self.origin]
+            )
+        )
+        return request_state
 
     def api_check(self, fnc: Callable) -> Callable:
         @wraps(fnc)
         def inner_api_check(*args, **kwargs):
-            maybe_api_key: Optional[str] = request.args.get('api_key')
-            if maybe_api_key is None:
-                raise APIMissingException
-            elif not self.api_key_match(maybe_api_key):
-                raise APIInvalidException
+            request_state = self.get_request_state(request)
+            if not request_state.is_signed_in:
+                return jsonify({"error": request_state.reason.name}), 400
             else:
                 return fnc(*args, **kwargs)
         return inner_api_check
-
-class APIMissingException(Exception):
-
-    def __init__(self) -> None:
-        super().__init__("Must provide valid api_key as ?api_key=<key> on request")
-
-class APIInvalidException(Exception):
-    "Must provide valid api_key as ?api_key=<key> on request"
-
-    def __init__(self) -> None:
-        super().__init__("Invalid API Key")

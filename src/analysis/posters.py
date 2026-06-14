@@ -1,46 +1,37 @@
 from src.util.util_io import data_path
-from src.util.request import soupifyURL
 from src.util.image import getImage, resizeImage, writeImage
 from src.db.db import DB
+from src.util.tmdb_api import TMDBAPI
 import glob
 import re
 
 
 class PosterFetcher:
-    def __init__(self, db: DB):
+    def __init__(self, db: DB, tmdb_api: TMDBAPI):
         self.db = db
+        self.tmdb_api = tmdb_api
 
     def saved_keys(self):
-        return [re.findall('.*\\\(.*).jpg', file)[0] for file in glob.glob(f'{data_path}/data/posters/*')]
+        return [re.findall(r'.*\\(.*).jpg', file)[0] for file in glob.glob(f'{data_path}/data/posters/*')]
 
     def all_keys(self):
+        print([link for link in self.db.fetch_distinct_links() if len(re.findall('https://www.imdb.com/title/(.*)/', link)) == 0])
         return [re.findall('https://www.imdb.com/title/(.*)/', link)[0] for link in self.db.fetch_distinct_links()]
 
     def get_poster_link(self, key):
-        soup = soupifyURL(f'https://www.imdb.com/title/{key}/')
-        poster = [link for link in soup.find_all('a', href=True)
-                  if '/mediaviewer/rm' in link['href'] and 'ref_=tt_ov_i' in link['href']]
-        if len(poster) > 0:
-            return 'https://www.imdb.com{}'.format(poster[0]['href'].split('?')[0])
-
-    def get_poster_src(self, poster_url):
-        soup = soupifyURL(poster_url)
-        for img in soup.find_all('img'):
-            if 'media-amazon' in img['src']:
-                if img.has_attr('data-image-id') and 'curr' in img['data-image-id']:
-                    return img['src']
+        maybe_tmdb = self.tmdb_api.findIMDBResult(key)
+        if len(maybe_tmdb) > 0:
+            maybe_slug = maybe_tmdb[0]['poster_path']
+            if maybe_slug is not None:
+                return 'https://image.tmdb.org/t/p/w1280{}'.format(maybe_slug)
 
     def get_poster(self, key):
         maybe_poster_url = self.get_poster_link(key)
         if maybe_poster_url is not None:
-            maybe_poster_src = self.get_poster_src(maybe_poster_url)
-            if maybe_poster_src is not None:
-                print(key, maybe_poster_url, maybe_poster_src)
-                poster_image_prior = getImage(maybe_poster_src)
-                poster_image = resizeImage(poster_image_prior, (210, 140))
-                writeImage(poster_image, f'{data_path}/data/posters/{key}.jpg')
-            else:
-                print(f'No poster src for {key}')
+            print(key, maybe_poster_url)
+            poster_image_prior = getImage(maybe_poster_url)
+            poster_image = resizeImage(poster_image_prior, (210, 140))
+            writeImage(poster_image, f'{data_path}/data/posters/{key}.jpg')
         else:
             print(f'No poster for {key}')
 

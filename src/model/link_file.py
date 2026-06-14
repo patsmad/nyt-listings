@@ -12,6 +12,8 @@ class LinkFile(BaseModel):
     file_id: int
     file: str
     file_date: datetime
+    file_width: int
+    file_height: int
     item_id: int
     x: int
     y: int
@@ -20,10 +22,6 @@ class LinkFile(BaseModel):
     top: int
     width: int
     height: int
-    channel: Optional[str]
-    time: Optional[datetime]
-    duration_minutes: Optional[int]
-    vcr_code: Optional[int]
     link_id: int
     confirmed: bool
 
@@ -32,6 +30,8 @@ class LinkFile(BaseModel):
             'file_id': self.file_id,
             'file': self.file,
             'file_date': self.file_date,
+            'file_width': self.file_width,
+            'file_height': self.file_height,
             'item_id': self.item_id,
             'x': self.x,
             'y': self.y,
@@ -40,10 +40,6 @@ class LinkFile(BaseModel):
             'top': self.top,
             'width': self.width,
             'height': self.height,
-            'channel': self.channel,
-            'time': self.time,
-            'duration_minutes': self.duration_minutes,
-            'vcr_code': self.vcr_code,
             'link_id': self.link_id,
             'confirmed': self.confirmed
         }
@@ -57,6 +53,8 @@ class LinkFile(BaseModel):
             'file_id': file.id,
             'file': file.name,
             'file_date': file.file_date,
+            'file_height': file.height,
+            'file_width': file.width,
             'item_id': item.id,
             'x': item.x,
             'y': item.y,
@@ -65,10 +63,6 @@ class LinkFile(BaseModel):
             'top': box.top,
             'width': box.width,
             'height': box.height,
-            'channel': box.channel,
-            'time': box.time,
-            'duration_minutes': box.duration_minutes,
-            'vcr_code': box.vcr_code,
             'link_id': link.id,
             'confirmed': link.confirmed
         })

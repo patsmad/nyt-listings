@@ -30,11 +30,7 @@ class Updater:
             'left': payload['left'],
             'top': payload['top'],
             'width': payload['width'],
-            'height': payload['height'],
-            'channel': None,
-            'time': None,
-            'duration_minutes': None,
-            'vcr_code': None
+            'height': payload['height']
         })
         self.db.insert_box(box)
         return item_id

@@ -5,12 +5,18 @@ from qwen_vl_utils import process_vision_info
 
 class LocalLLMAPI:
     def __init__(self):
-        self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            "Qwen/Qwen2.5-VL-7B-Instruct", torch_dtype="auto", device_map="auto"
-        )
-        self.processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-7B-Instruct")
+        self.model = None
+        self.processor = None
+
+    def lazy_load(self):
+        if self.model is None or self.processor is None:
+            self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+                "Qwen/Qwen2.5-VL-3B-Instruct", torch_dtype="auto", device_map="auto"
+            )
+            self.processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-3B-Instruct")
 
     def get_title_for_image(self, image):
+        self.lazy_load()
         print('Deducing title...')
         messages = [
             {

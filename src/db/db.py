@@ -167,10 +167,28 @@ class DB:
             )
         return {item.link_id: Item(**item._asdict()) for item in result.fetchall()}
 
+    def fetch_box_ids_to_files(self, box_ids: List[int]) -> dict[int, File]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id AS box_id, '
+                        'file.id, '
+                        'file.name, '
+                        'file.file_date, '
+                        'file.width, '
+                        'file.height, '
+                        'file.created_at, '
+                        'file.updated_at FROM boxes box '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE box.id IN (' + ', '.join(map(str, box_ids)) +')')
+            )
+        return {file.box_id: File(**file._asdict()) for file in result.fetchall()}
+
     def _insert_box(self, con: sa.Connection, box: InputBox) -> int:
         return con.execute(
-            sa.text('INSERT INTO boxes (item_id, left, top, width, height, channel, time, duration_minutes, vcr_code) '
-                    'VALUES(:item_id, :left, :top, :width, :height, :channel, :time, :duration_minutes, :vcr_code) RETURNING boxes.id'),
+            sa.text('INSERT INTO boxes (item_id, left, top, width, height) '
+                    'VALUES(:item_id, :left, :top, :width, :height) RETURNING boxes.id'),
             box.model_dump()
         ).first()[0]
 
@@ -194,15 +212,9 @@ class DB:
                         'top = :top, '
                         'width = :width, '
                         'height = :height, '
-                        'channel = :channel, '
-                        'time = :time, '
-                        'duration_minutes = :duration_minutes, '
-                        'vcr_code = :vcr_code, '
                         'updated_at = CURRENT_TIMESTAMP '
                         'WHERE id = :id RETURNING id'),
-                {'id': box.id, 'left': box.left, 'top': box.top, 'width': box.width, 'height': box.height,
-                 'channel': box.channel, 'time': box.formatted_time(),
-                 'duration_minutes': box.duration_minutes, 'vcr_code': box.vcr_code}
+                {'id': box.id, 'left': box.left, 'top': box.top, 'width': box.width, 'height': box.height}
             ).first()
             con.commit()
         return maybeId[0] if maybeId is not None else None
@@ -226,10 +238,6 @@ class DB:
                         'box.top, '
                         'box.width, '
                         'box.height, '
-                        'box.channel, '
-                        'box.time, '
-                        'box.duration_minutes, '
-                        'box.vcr_code, '
                         'box.created_at, '
                         'box.updated_at FROM boxes box '
                         'JOIN items item ON box.item_id = item.id '
@@ -237,6 +245,42 @@ class DB:
                         'WHERE file.id = :file_id'), {'file_id': file_id}
             )
         return [Box(**box._asdict()) for box in result.fetchall()]
+
+    def fetch_empty_boxes(self) -> list[Box]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id, '
+                        'box.item_id, '
+                        'box.left, '
+                        'box.top, '
+                        'box.width, '
+                        'box.height, '
+                        'box.created_at, '
+                        'box.updated_at FROM boxes box '
+                        'LEFT JOIN links link ON link.box_id = box.id '
+                        'JOIN items item ON box.item_id = item.id '
+                        'JOIN files file ON item.file_id = file.id '
+                        'WHERE link.link IS NULL '
+                        'ORDER BY file.file_date'), {}
+            )
+        return [Box(**box._asdict()) for box in result.fetchall()]
+
+    def fetch_box_ids_to_items(self, box_ids: List[int]) -> dict[int, Item]:
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT '
+                        'box.id AS box_id, '
+                        'item.id, '
+                        'item.x, '
+                        'item.y, '
+                        'item.file_id, '
+                        'item.created_at, '
+                        'item.updated_at FROM boxes box '
+                        'JOIN items item ON box.item_id = item.id '
+                        'WHERE box.id IN (' + ', '.join(map(str, box_ids)) +')')
+            )
+        return {item.box_id: Item(**item._asdict()) for item in result.fetchall()}
 
     def fetch_link_id_to_boxes(self, link: str) -> dict[int, Box]:
         with self.engine.connect() as con:
@@ -249,10 +293,6 @@ class DB:
                         'box.top, '
                         'box.width, '
                         'box.height, '
-                        'box.channel, '
-                        'box.time, '
-                        'box.duration_minutes, '
-                        'box.vcr_code, '
                         'box.created_at, '
                         'box.updated_at FROM links link '
                         'JOIN boxes box ON link.box_id = box.id '
@@ -270,10 +310,6 @@ class DB:
                         'box.top, '
                         'box.width, '
                         'box.height, '
-                        'box.channel, '
-                        'box.time, '
-                        'box.duration_minutes, '
-                        'box.vcr_code, '
                         'box.created_at, '
                         'box.updated_at FROM boxes box '
                         'WHERE box.id = :id'), {'id': box_id}
@@ -290,10 +326,6 @@ class DB:
                         'box.top, '
                         'box.width, '
                         'box.height, '
-                        'box.channel, '
-                        'box.time, '
-                        'box.duration_minutes, '
-                        'box.vcr_code, '
                         'box.created_at, '
                         'box.updated_at FROM boxes box '
                         'JOIN items item ON box.item_id = item.id '
@@ -485,7 +517,7 @@ class DB:
 
     def fetch_link_info_by_title(self, title: str) -> Optional[LinkInfo]:
         with self.engine.connect() as con:
-            result = con.execute(
+            results = con.execute(
                 sa.text('SELECT '
                         'link_info.id, '
                         'link_info.link, '
@@ -497,9 +529,13 @@ class DB:
                         'link_info.updated_at FROM link_info link_info '
                         'WHERE UPPER(link_info.title) = :title '
                         'ORDER BY link_info.votes DESC'), {'title': title.upper()}
-            ).fetchone()
-        if result is not None:
-            return LinkInfo(**result._asdict())
+            ).fetchall()
+        if len(results) > 0:
+            if len(results) > 1:
+                for result in results:
+                    print(result)
+            else:
+                return LinkInfo(**results[0]._asdict())
 
     def fetch_all_link_info(self) -> List[LinkInfo]:
         with self.engine.connect() as con:
@@ -529,21 +565,43 @@ class DB:
                         'link_info.votes, '
                         'link_info.created_at, '
                         'link_info.updated_at FROM link_info link_info '
-                        'WHERE link_info.year = :year AND link_info.votes >= 3000'
+                        'WHERE link_info.year = :year'
                         ), {'year': year}
             ).fetchall()
         return [LinkInfo(**result._asdict()) for result in results]
 
     def count(self, link: str) -> int:
         with self.engine.connect() as con:
-            results = con.execute(
+            result = con.execute(
                 sa.text('SELECT '
-                        'box.vcr_code, '
                         'COUNT(*) as count FROM '
                         'link_info link_info JOIN '
                         'links link ON link_info.link = link.link JOIN '
                         'boxes box ON link.box_id = box.id '
-                        'WHERE link.link = :link '
-                        'GROUP BY box.vcr_code'),{'link': link}
+                        'WHERE link.link = :link'),{'link': link}
+            ).fetchone()
+        return int(result[0])
+
+    def total_max_size(self, link: str) -> (float, float):
+        with self.engine.connect() as con:
+            result = con.execute(
+                sa.text('SELECT SUM(CAST(box.height * box.width AS REAL) / CAST(file.height * file.width AS REAL)) as total_size,'
+                        'MAX(CAST(box.height * box.width AS REAL) / CAST(file.height * file.width AS REAL)) as max_size FROM '
+                        'link_info link_info JOIN '
+                        'links link ON link_info.link = link.link JOIN '
+                        'boxes box ON link.box_id = box.id JOIN '
+                        'items item ON box.item_id = item.id JOIN '
+                        'files file ON item.file_id = file.id '
+                        'WHERE link.link = :link'),{'link': link}
+            ).fetchone()
+        return float(result[0]), float(result[1])
+
+    def fetch_all_available_titles(self) -> List[tuple[str, int, str]]:
+        with self.engine.connect() as con:
+            results = con.execute(
+                sa.text('SELECT '
+                        'li.title, '
+                        'li.year, '
+                        'li.link FROM link_info li')
             ).fetchall()
-        return sum([result[1] if result[0] is None else 1 for result in results])
+        return [(result[0], result[1], result[2]) for result in results]

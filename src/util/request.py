@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup as BS
 from requests import get, Response
 from src.util.config import Config
 
@@ -19,6 +18,6 @@ def retryGet(url: str, retry: int, cache: bool = True) -> Response:
 def requestURL(url: str, cache: bool = True) -> Response:
     return retryGet(url, 0, cache)
 
-def soupifyURL(url: str, cache: bool = True) -> BS:
+def requestURLText(url, cache=True, cookie=None):
     with requestURL(url, cache) as request:
-        return BS(request.text, 'html.parser')
+        return request.text

@@ -1,6 +1,6 @@
 {
-    "api-key": "",
     "headers": {},
-    "path_to_tesseract": "",
-    "gemini_api_key": ""
+    "tmdb_api_key": "",
+    "clerk_secret_key": "",
+    "origin": ""
 }

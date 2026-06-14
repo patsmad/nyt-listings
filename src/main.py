@@ -7,8 +7,6 @@ from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
 import re
-import os
-from util.ai_studio import AIStudioAPI
 from util.config import Config
 from util.image import open_image, crop_image, image_to_buf
 from util.local_llm import LocalLLMAPI
@@ -17,15 +15,12 @@ from typing import Optional
 
 config = Config()
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=[config.origin], supports_credentials=True)
 
 api: API = api_builder.build()
 db_io: DBIO = db_io_builder.build()
 poster_fetcher: PosterFetcher = poster_fetcher_builder.build()
-if os.environ.get('USE_LOCAL', False):
-    llm = LocalLLMAPI()
-else:
-    llm = AIStudioAPI()
+llm = LocalLLMAPI()
 
 
 # TODO: Exceptions should be HTTP errors with a BMT themed splash page
@@ -42,32 +37,6 @@ def file() -> dict:
       return api.get_file(file_id).to_dict()
    else:
       raise Exception('Must provide ?filename=<filename> for file request')
-
-@app.route('/file/parse/', methods=['POST'])
-@config.api_check
-def file_parse() -> dict:
-    payload: dict = json.loads(request.data)
-    maybe_file_id: Optional[str] = payload.get('file_id')
-    if maybe_file_id is not None:
-        file_name: Optional[str] = api.get_file_name(int(maybe_file_id))
-        if file_name is not None and pathExists(f'data/files/{file_name}'):
-            img = open_image(f'{data_path}/data/files/{file_name}')
-            boxes = llm.get_boxes_for_image(img)
-            print(len(boxes))
-            for box in boxes:
-                item_id: int = api.add_item({
-                    'file_id': maybe_file_id,
-                    'left': box['left'],
-                    'top': box['top'],
-                    'width': box['width'],
-                    'height': box['height']
-                })
-                print(f'Added item {item_id} to file {maybe_file_id}')
-            return {'status': 'SUCCESS'}
-        else:
-            raise Exception('Invalid filename request')
-    else:
-        raise Exception('Must provide ?filename=<filename> for img request')
 
 @app.route('/link/', methods=['GET'])
 @config.api_check
@@ -101,10 +70,18 @@ def year_search() -> dict:
        for link_info in api.search_year(year):
            link_info_dict = link_info.model_dump()
            link_info_dict['count'] = api.get_count(link_info.link)
+           total_size, max_size = api.get_total_max_size(link_info.link)
+           link_info_dict['total_size'] = total_size
+           link_info_dict['max_size'] = max_size
            years.append(link_info_dict)
        return {'years': sorted(years, key=lambda y: y['count'], reverse=True)}
    else:
        raise Exception('Must provide ?year=<year> for year request')
+
+@app.route('/empty_boxes/', methods=['GET'])
+@config.api_check
+def empty_boxes() -> list:
+   return [box_file.to_dict() for box_file in api.get_empty_boxes()]
 
 @app.route('/box/', methods=['GET'])
 @config.api_check
@@ -220,46 +197,6 @@ def box_update() -> dict:
     else:
         raise Exception('Box id <{}> not found'.format(payload.get('id')))
 
-@app.route('/vcr_code/update/', methods=['POST'])
-@config.api_check
-def vcr_code_update() -> dict:
-    payload: dict = json.loads(request.data)
-    updated_id: Optional[int] = api.update_box(payload)
-    if updated_id is not None:
-        return {'id': updated_id}
-    else:
-        raise Exception('Box id <{}> not found'.format(payload.get('id')))
-
-@app.route('/channel/update/', methods=['POST'])
-@config.api_check
-def channel_update() -> dict:
-    payload: dict = json.loads(request.data)
-    updated_id: Optional[int] = api.update_box(payload)
-    if updated_id is not None:
-        return {'id': updated_id}
-    else:
-        raise Exception('Box id <{}> not found'.format(payload.get('id')))
-
-@app.route('/time/update/', methods=['POST'])
-@config.api_check
-def time_update() -> dict:
-    payload: dict = json.loads(request.data)
-    updated_id: Optional[int] = api.update_box(payload)
-    if updated_id is not None:
-        return {'id': updated_id}
-    else:
-        raise Exception('Box id <{}> not found'.format(payload.get('id')))
-
-@app.route('/duration/update/', methods=['POST'])
-@config.api_check
-def duration_update() -> dict:
-    payload: dict = json.loads(request.data)
-    updated_id: Optional[int] = api.update_box(payload)
-    if updated_id is not None:
-        return {'id': updated_id}
-    else:
-        raise Exception('Box id <{}> not found'.format(payload.get('id')))
-
 @app.route('/poster/', methods=['GET'])
 @config.api_check
 def poster() -> Response:
@@ -273,14 +210,19 @@ def poster() -> Response:
     else:
         raise Exception('Must provide ?link=<link> for poster request')
 
+@app.route('/available_titles/', methods=['GET'])
+@config.api_check
+def available_titles() -> list[dict]:
+    return [{
+        'title': title,
+        'year': year,
+        'search_str': f'{title} ({year})',
+        'link': link
+    } for title, year, link in api.get_all_available_titles()]
+
 @click.group()
 def cli():
     pass
-
-@click.command()
-@click.argument('filename')
-def from_file_to_db(filename):
-    db_io.from_file_to_db(filename)
 
 @click.command()
 def add_files():
@@ -295,31 +237,32 @@ def fill_missing_posters():
     poster_fetcher.fill_missing_posters()
 
 @click.command()
-def custom_runner():
-    db_io.custom_runner()
-
-@click.command()
-@click.argument('links')
-def fill_vcr_links(links):
-    db_io.fill_vcr_links(links)
-
-@click.command()
-@click.argument('files')
-def fill_vcr_files(files):
-    db_io.fill_vcr_files(files)
+def fill_missing_links():
+    all_files = api.get_all_files()
+    for file in all_files:
+        annotated_file = api.get_file(file.id)
+        num = len([box for item in annotated_file.items for box in item.boxes if len(box.links) == 0])
+        if num > 0:
+            print(file, num)
+        for item in annotated_file.items:
+            for box in item.boxes:
+                if len(box.links) == 0:
+                    img = open_image(f'{data_path}/data/files/{file.name}')
+                    cropped_img = crop_image(img, box.left, box.top, box.width, box.height)
+                    title = llm.get_title_for_image(cropped_img)
+                    id: int = api.add_title({'box_id': box.id, 'confirmed': True, 'title': title.strip()})
+                    print(id, title.strip())
 
 @click.command()
 def server():
     app.run(debug=True)
 
+
 cli.add_command(server)
 cli.add_command(add_files)
-cli.add_command(from_file_to_db)
 cli.add_command(update_imdb_data)
 cli.add_command(fill_missing_posters)
-cli.add_command(custom_runner)
-cli.add_command(fill_vcr_links)
-cli.add_command(fill_vcr_files)
+cli.add_command(fill_missing_links)
 
 if __name__ == '__main__':
     cli()
