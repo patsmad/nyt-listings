@@ -15,7 +15,7 @@ from typing import Optional
 
 config = Config()
 app = Flask(__name__)
-CORS(app, origins=[config.origin], supports_credentials=True)
+CORS(app, origins=[config.origin])
 
 api: API = api_builder.build()
 db_io: DBIO = db_io_builder.build()

@@ -14,10 +14,10 @@ class Config:
         self.tmdb_api_key = config['tmdb_api_key']
         self.clerk_secret_key = config['clerk_secret_key']
         self.origin = config['origin']
+        self.sdk = Clerk(bearer_auth=self.clerk_secret_key)
 
     def get_request_state(self, request: httpx.Request) -> RequestState:
-        sdk = Clerk(bearer_auth=self.clerk_secret_key)
-        request_state = sdk.authenticate_request(
+        request_state = self.sdk.authenticate_request(
             request,
             AuthenticateRequestOptions(
                 authorized_parties=[self.origin]
