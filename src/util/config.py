@@ -16,9 +16,9 @@ class Config:
         self.origin = config['origin']
         self.sdk = Clerk(bearer_auth=self.clerk_secret_key)
 
-    def get_request_state(self, request: httpx.Request) -> RequestState:
+    def get_request_state(self, flask_request: request) -> RequestState:
         request_state = self.sdk.authenticate_request(
-            request,
+            flask_request,
             AuthenticateRequestOptions(
                 authorized_parties=[self.origin]
             )
@@ -30,7 +30,7 @@ class Config:
         def inner_api_check(*args, **kwargs):
             request_state = self.get_request_state(request)
             if not request_state.is_signed_in:
-                return jsonify({"error": request_state.reason.name}), 400
+                return jsonify({"error": request_state.reason.name}), 401
             else:
                 return fnc(*args, **kwargs)
         return inner_api_check
