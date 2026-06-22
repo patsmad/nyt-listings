@@ -2,5 +2,6 @@
     "headers": {},
     "tmdb_api_key": "",
     "clerk_secret_key": "",
-    "origin": ""
+    "origin": "",
+    "sqlite_mode": ""
 }

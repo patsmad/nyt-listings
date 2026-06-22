@@ -14,6 +14,7 @@ class Config:
         self.tmdb_api_key = config['tmdb_api_key']
         self.clerk_secret_key = config['clerk_secret_key']
         self.origin = config['origin']
+        self.sqlite_mode = config['sqlite_mode']
         self.sdk = Clerk(bearer_auth=self.clerk_secret_key)
 
     def get_request_state(self, flask_request: request) -> RequestState:
