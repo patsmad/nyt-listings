@@ -26,7 +26,7 @@ class EngineBuilder(Builder[sa.Engine]):
         super().__init__(self.get_engine)
 
     def get_engine(self) -> sa.Engine:
-        return sa.create_engine(f'sqlite:///file:../data/NYTListings.db?mode={Config().sqlite_mode}&uri=true')
+        return sa.create_engine(f'sqlite:///file:data/NYTListings.db?mode={Config().sqlite_mode}&uri=true')
 
 class DBBuilder(Builder[DB]):
     def __init__(self) -> None:
