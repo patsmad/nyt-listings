@@ -1,13 +1,13 @@
-from api.api import API
-from api.fetcher import Fetcher
-from api.updater import Updater
-from db.db import DB
-from db.io import DBIO
-from analysis.posters import PosterFetcher
+from src.api.api import API
+from src.api.fetcher import Fetcher
+from src.api.updater import Updater
+from src.db.db import DB
+from src.db.io import DBIO
+from src.analysis.posters import PosterFetcher
 import sqlalchemy as sa
 from typing import TypeVar, Generic, Callable, Optional
-from util.tmdb_api import TMDBAPI
-from util.config import Config
+from src.util.tmdb_api import TMDBAPI
+from src.util.config import Config
 
 T = TypeVar('T')
 

@@ -1,16 +1,16 @@
-from api.api import API
-from builder import api_builder, db_io_builder, poster_fetcher_builder
+from src.api.api import API
+from src.builder import api_builder, db_io_builder, poster_fetcher_builder
 import click
-from db.io import DBIO
-from analysis.posters import PosterFetcher
+from src.db.io import DBIO
+from src.analysis.posters import PosterFetcher
 from flask import Flask, request, send_from_directory, Response, send_file
 from flask_cors import CORS
 import json
 import re
-from util.config import Config
-from util.image import open_image, crop_image, image_to_buf
-from util.local_llm import LocalLLMAPI
-from util.util_io import data_path, pathExists
+from src.util.config import Config
+from src.util.image import open_image, crop_image, image_to_buf
+from src.util.local_llm import LocalLLMAPI
+from src.util.util_io import data_path, pathExists
 from typing import Optional
 
 config = Config()
@@ -254,8 +254,14 @@ def fill_missing_links():
                     print(id, title.strip())
 
 @click.command()
-def server():
-    app.run(debug=True)
+@click.option(
+    "--host",
+    type=str,
+    default='127.0.0.1',
+    help="The host name or IP address (default: 127.0.0.1)",
+)
+def server(host):
+    app.run(debug=True, host=host)
 
 
 cli.add_command(server)
